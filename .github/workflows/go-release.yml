@@ -4,7 +4,7 @@ name: go-release
 on:
   workflow_call:
     secrets:
-      github_token:
+      gh_token:
         required: true
       tap_github_token:
         required: false
@@ -47,7 +47,7 @@ jobs:
       - name: Validate release
         id: validate
         env:
-          GITHUB_TOKEN: ${{ secrets.github_token }}
+          GITHUB_TOKEN: ${{ secrets.gh_token }}
         run: |
           goreleaser check
           if [ "${{ github.event_name }}" != "push" ]; then
@@ -89,7 +89,7 @@ jobs:
         if: steps.validate.outputs.skip != 'true'
         env:
           TAG: ${{ steps.validate.outputs.tag }}
-          GITHUB_TOKEN: ${{ secrets.github_token }}
+          GITHUB_TOKEN: ${{ secrets.gh_token }}
           TAP_GITHUB_TOKEN: ${{ secrets.tap_github_token }}
         run: |
           echo "Pushing ${TAG}"

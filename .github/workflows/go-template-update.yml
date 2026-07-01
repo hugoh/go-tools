@@ -4,7 +4,7 @@ name: go-template-update
 on:
   workflow_call:
     secrets:
-      github_token:
+      gh_token:
         required: true
 
 jobs:
@@ -25,7 +25,7 @@ jobs:
         run: copier update --UNSAFE --defaults -a .copier-answers.yml
       - name: Open PR if template changed
         env:
-          GITHUB_TOKEN: ${{ secrets.github_token }}
+          GITHUB_TOKEN: ${{ secrets.gh_token }}
         run: |
           if git diff --quiet; then
             echo "No template changes"
