@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+#MISE description="Require a PR (with hk/goci/release passing) to merge to a branch — blocks direct pushes, including by admins"
+#USAGE arg "<repo>" help="owner/repo to configure (e.g. hugoh/hrd)"
+#USAGE flag "--branch <branch>" help="Branch to protect" default="main"
+set -euo pipefail
+
+# shellcheck disable=SC2154 # usage_repo/usage_branch are injected by mise from the USAGE spec above
+repo="${usage_repo}"
+branch="${usage_branch:-main}"
+
+echo "Configuring branch protection for ${repo}@${branch} (required: hk, goci, release; PRs required; no direct pushes, including admins)..."
+
+gh api "repos/${repo}/branches/${branch}/protection" \
+  --method PUT \
+  -H "Accept: application/vnd.github+json" \
+  --input - <<'EOF'
+{
+  "required_status_checks": {
+    "strict": true,
+    "contexts": ["hk", "goci", "release"]
+  },
+  "enforce_admins": true,
+  "required_pull_request_reviews": {
+    "required_approving_review_count": 0
+  },
+  "restrictions": null
+}
+EOF
+
+echo "Done."
