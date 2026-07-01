@@ -1,0 +1,42 @@
+version: "2"
+linters:
+  default: all
+  disable:
+    - gomodguard
+    - noinlineerr
+    - paralleltest
+[%- for l in golangci_extra_disable %]
+    - [[ l ]]
+[%- endfor %]
+    - wsl
+[%- if golangci_revive_overrides %]
+  settings:
+    revive:
+      rules:
+        - name: redefines-builtin-id
+          disabled: true
+        - name: exported
+          disabled: true
+        - name: unused-parameter
+        - name: unused-receiver
+[%- endif %]
+  exclusions:
+    rules:
+      - path: _test\.go$
+        linters:
+[%- for l in golangci_test_exclude_linters %]
+          - [[ l ]]
+[%- endfor %]
+[%- for rule in golangci_extra_exclusions %]
+      - path: [[ rule.path ]]
+        linters:
+[%- for l in rule.linters %]
+          - [[ l ]]
+[%- endfor %]
+[%- endfor %]
+formatters:
+  enable:
+    - gci
+    - gofumpt
+    - goimports
+    - golines

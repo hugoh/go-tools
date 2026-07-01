@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+#MISE description="Run fuzz tests"
+#MISE sources=["go.mod", "**/*.go"]
+go test -run '^$' -fuzz=. -fuzztime=5s ./...

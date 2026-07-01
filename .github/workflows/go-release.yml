@@ -1,0 +1,99 @@
+---
+name: go-release
+
+on:
+  workflow_call:
+    secrets:
+      github_token:
+        required: true
+      tap_github_token:
+        required: false
+
+jobs:
+  release:
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code with full history
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Get Go version
+        id: go-version
+        run: |
+          GO_VERSION=$(grep '^go ' mise.toml | sed 's/.*"\(.*\)"/\1/')
+          echo "go=${GO_VERSION}" >> "$GITHUB_OUTPUT"
+      - name: Cache Go modules
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: ${{ runner.os }}-go-${{ steps.go-version.outputs.go }}-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-${{ steps.go-version.outputs.go }}-
+      - name: Setup mise
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151
+      - name: Semver release
+        if: github.event_name == 'push'
+        uses: cocogitto/cocogitto-action@9a9fe03b31c47444290c0d7f9b1ee1b44ee13f20
+        with:
+          command: bump
+          args: --auto
+      - name: Validate release
+        id: validate
+        env:
+          GITHUB_TOKEN: ${{ secrets.github_token }}
+        run: |
+          goreleaser check
+          if [ "${{ github.event_name }}" != "push" ]; then
+            echo "--- Dry-run: version preview ---"
+            cog bump --auto --dry-run --skip-untracked || echo "(no version bump needed)"
+            echo ""
+            echo "--- Validating GITHUB_TOKEN setup ---"
+            if [ -z "$GITHUB_TOKEN" ]; then
+              echo "FAIL: GITHUB_TOKEN is not set"
+              exit 1
+            fi
+            echo "✓ GITHUB_TOKEN is set"
+            if [ -z "$GITHUB_REPOSITORY" ]; then
+              echo "FAIL: GITHUB_REPOSITORY is not set"
+              exit 1
+            fi
+            echo "✓ GITHUB_REPOSITORY is ${GITHUB_REPOSITORY}"
+            REMOTE_URL="https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}"
+            echo "${REMOTE_URL}" | grep -Eq '^https://x-access-token:.+@github\.com/.+/.+' || {
+              echo "FAIL: remote URL format is invalid"
+              exit 1
+            }
+            echo "✓ Remote URL format is valid"
+            git ls-remote "${REMOTE_URL}" HEAD > /dev/null
+            echo "✓ Git remote is accessible (token + URL work)"
+            echo ""
+            echo "Dry-run complete — no tag pushed or released"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          TAG=$(git tag --points-at HEAD | head -1)
+          if [ -z "$TAG" ]; then
+            echo "No tag at HEAD — skipping release"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+      - name: Push tag and Release
+        if: steps.validate.outputs.skip != 'true'
+        env:
+          TAG: ${{ steps.validate.outputs.tag }}
+          GITHUB_TOKEN: ${{ secrets.github_token }}
+          TAP_GITHUB_TOKEN: ${{ secrets.tap_github_token }}
+        run: |
+          echo "Pushing ${TAG}"
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}"
+          git push origin "${TAG}"
+          echo "Releasing ${TAG}"
+          goreleaser release --clean

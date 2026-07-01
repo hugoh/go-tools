@@ -1,0 +1,18 @@
+profile: cover.out
+
+threshold:
+  total: [[ coverage_total ]]
+[%- if coverage_backends_override %]
+
+override:
+  - path: backends/
+    threshold: 100
+[%- endif %]
+[%- if testcoverage_excludes %]
+
+exclude:
+  paths:
+[%- for path in testcoverage_excludes %]
+    - [[ path ]]
+[%- endfor %]
+[%- endif %]

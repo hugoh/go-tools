@@ -1,0 +1,20 @@
+[%- if codecov_style == 'full' -%]
+coverage:
+  status:
+    project:
+      default:
+        target: [[ codecov_target ]] # set lower than ./.testcoverage/coverage.txt because of different reporting
+
+component_management:
+  individual_components:
+[%- for c in codecov_components %]
+    - component_id: [[ c.id ]]
+      name: [[ c.name ]]
+      paths:
+        - [[ c.path ]]
+[%- endfor %]
+[% endif -%]
+ignore:
+[%- for path in codecov_ignore %]
+  - [[ path ]]
+[%- endfor %]

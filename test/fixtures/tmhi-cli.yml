@@ -1,0 +1,23 @@
+project_name: tmhi-cli
+has_goreleaser: true
+project_description: "CLI for managing T-Mobile Home Internet gateway and signal monitoring"
+goreleaser_version_pkg: "main"
+dev_watch: false
+has_test_int: true
+has_gen: false
+has_fuzz: false
+golangci_extra_disable: [depguard, exhaustruct, testpackage]
+golangci_test_exclude_linters: [err113, funlen, varnamelen]
+golangci_revive_overrides: false
+golangci_extra_exclusions: []
+coverage_total: 80
+coverage_backends_override: false
+testcoverage_excludes: ["main\\.go$"]
+cog_omit_type: ""
+codecov_style: simple
+codecov_ignore: ["main.go"]
+dprint_has_excludes: true
+hk_has_golangci_step: true
+hk_has_goreleaser_step: false
+hk_prepush_with_go_ci: false
+test_int_cmd: "test ! -d internal || gotestsum -- -race -tags=integration ./internal/..."

@@ -1,0 +1,169 @@
+_min_copier_version: "9.0.0"
+_answers_file: .copier-answers.yml
+_subdirectory: template
+_envops:
+  block_start_string: "[%"
+  block_end_string: "%]"
+  variable_start_string: "[["
+  variable_end_string: "]]"
+_skip_if_exists:
+  - mise.toml
+
+project_name:
+  type: str
+  help: "Project/binary name (e.g. hrd) — used in .goreleaser.yml and its GitHub homepage URL"
+
+has_goreleaser:
+  type: bool
+  default: false
+  help: Project ships a binary release via goreleaser (adds .goreleaser.yml)
+
+project_description:
+  type: str
+  default: ""
+  help: One-line description used in .goreleaser.yml's nfpms/homebrew_casks blocks
+  when: "[[ has_goreleaser ]]"
+
+goreleaser_version_pkg:
+  type: str
+  default: "main"
+  help: "Go package path whose 'version' var gets ldflags-injected (e.g. main, github.com/hugoh/hrd/cmd)"
+  when: "[[ has_goreleaser ]]"
+
+has_homebrew_cask:
+  type: bool
+  default: false
+  help: Also publish a Homebrew cask on release (needs a TAP_GITHUB_TOKEN secret)
+  when: "[[ has_goreleaser ]]"
+
+dev_watch:
+  type: bool
+  default: false
+  help: "dev task runs 'gotestsum --watch ./...' instead of 'go run .'"
+
+has_test_int:
+  type: bool
+  default: true
+  help: Project has an integration-test mise task
+
+test_int_cmd:
+  type: str
+  default: "test ! -d internal || gotestsum -- -race -tags=integration ./internal/..."
+  help: Shell command for the test-int mise task
+  when: "[[ has_test_int ]]"
+
+has_gen:
+  type: bool
+  default: false
+  help: Project has a codegen step whose output should be committed (adds gen/gen-check mise tasks)
+
+gen_sources:
+  type: json
+  default: []
+  help: "Source file globs that trigger regeneration: list of strings"
+  when: "[[ has_gen ]]"
+
+gen_outputs:
+  type: json
+  default: []
+  help: "Generated file paths (also used by gen-check to diff): list of strings"
+  when: "[[ has_gen ]]"
+
+gen_cmd:
+  type: json
+  default: []
+  help: "Shell commands to run to regenerate: list of strings"
+  when: "[[ has_gen ]]"
+
+gen_check_cmd:
+  type: str
+  default: "git diff --exit-code"
+  help: Shell command that fails if generated output is stale
+  when: "[[ has_gen ]]"
+
+has_fuzz:
+  type: bool
+  default: false
+  help: Project has a fuzz mise task
+
+golangci_extra_disable:
+  type: json
+  default: []
+  help: Extra golangci-lint linters to disable beyond the shared baseline
+
+golangci_test_exclude_linters:
+  type: json
+  default: ["err113", "funlen", "varnamelen"]
+  help: Linters excluded for _test.go files
+
+golangci_revive_overrides:
+  type: bool
+  default: false
+  help: Add revive rule overrides (redefines-builtin-id/exported/unused-parameter/unused-receiver)
+
+golangci_extra_exclusions:
+  type: json
+  default: []
+  help: "Extra exclusion rules beyond the _test.go$ rule: list of {path, linters}"
+
+coverage_total:
+  type: int
+  default: 90
+  help: go-test-coverage total threshold
+
+coverage_backends_override:
+  type: bool
+  default: false
+  help: Add a backends/ path override at 100% threshold
+
+testcoverage_excludes:
+  type: json
+  default: []
+  help: List of exclude path patterns for .testcoverage.yml
+
+cog_omit_type:
+  type: str
+  default: ""
+  help: "Commit type to omit from changelog in cog.toml (e.g. doc, lint); empty = none"
+
+codecov_style:
+  type: str
+  default: simple
+  choices: [simple, full]
+  help: "simple = just an ignore list; full = coverage target + component_management"
+
+codecov_ignore:
+  type: json
+  default: ["main.go"]
+  help: codecov ignore paths
+
+codecov_target:
+  type: str
+  default: "80%"
+  when: "[[ codecov_style == 'full' ]]"
+
+codecov_components:
+  type: json
+  default: []
+  help: "List of {id, name, path} component definitions"
+  when: "[[ codecov_style == 'full' ]]"
+
+dprint_has_excludes:
+  type: bool
+  default: true
+  help: dprint.json excludes **/*-lock.json
+
+hk_has_golangci_step:
+  type: bool
+  default: true
+  help: hk.pkl runs golangci-lint as its own step (profile !ci)
+
+hk_has_goreleaser_step:
+  type: bool
+  default: false
+  help: hk.pkl runs 'goreleaser check' as its own step
+
+hk_prepush_with_go_ci:
+  type: bool
+  default: false
+  help: hk.pkl pre-push hook also runs 'mise ci'

@@ -1,0 +1,51 @@
+---
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions: {}
+
+jobs:
+  hk:
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code with full history
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Setup mise
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151
+      - name: hk checks
+        run: hk check --no-progress --profile ci --all
+      - name: Display hk log on failure
+        if: failure()
+        run: cat /home/runner/.local/state/hk/output.log
+
+  notify-consumers:
+    needs: [hk]
+    if: github.event_name == 'push'
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
+      - name: Dispatch update event to consumer repos
+        env:
+          GH_TOKEN: ${{ secrets.DISPATCH_TOKEN }}
+        run: |
+          while IFS= read -r repo; do
+            [ -z "$repo" ] && continue
+            echo "Dispatching to ${repo}"
+            gh api "repos/${repo}/dispatches" -f event_type=go-tools-updated
+          done < consumers.txt

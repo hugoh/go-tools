@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+#MISE description="Render the Copier template against fixtures and validate the output"
+set -euo pipefail
+
+root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+fail=0
+
+check_one() {
+  local label=$1 data_file=$2
+  local tmpdir
+  tmpdir=$(mktemp -d)
+  trap 'rm -rf "$tmpdir"' RETURN
+
+  echo "--- rendering: $label ---"
+  local copier_args=(copy --UNSAFE --overwrite --defaults -d project_name="$label")
+  if [[ -n "$data_file" ]]; then
+    copier_args+=(--data-file "$data_file")
+  fi
+  if ! copier "${copier_args[@]}" "$root" "$tmpdir" >/tmp/render-check-copier.log 2>&1; then
+    echo "FAIL ($label): copier render failed"
+    cat /tmp/render-check-copier.log
+    fail=1
+    return
+  fi
+
+  if ! shellcheck "$tmpdir"/mise-tasks/*; then
+    echo "FAIL ($label): shellcheck"
+    fail=1
+  fi
+
+  if ! actionlint "$tmpdir"/.github/workflows/*.yml; then
+    echo "FAIL ($label): actionlint"
+    fail=1
+  fi
+
+  if ! (cd "$tmpdir" && dprint check) >/tmp/render-check-dprint.log 2>&1; then
+    echo "FAIL ($label): dprint check"
+    cat /tmp/render-check-dprint.log
+    fail=1
+  fi
+
+  if ! (cd "$tmpdir" && hk validate) >/tmp/render-check-hk.log 2>&1; then
+    echo "FAIL ($label): hk validate (hk.pkl)"
+    cat /tmp/render-check-hk.log
+    fail=1
+  fi
+
+  if [[ -f "$tmpdir/.goreleaser.yml" ]]; then
+    if ! (cd "$tmpdir" && git init -q && git remote add origin "https://github.com/hugoh/$label.git" && TAP_GITHUB_TOKEN=x goreleaser check) >/tmp/render-check-goreleaser.log 2>&1; then
+      echo "FAIL ($label): goreleaser check"
+      cat /tmp/render-check-goreleaser.log
+      fail=1
+    fi
+  fi
+
+  echo "ok: $label"
+}
+
+check_one "defaults" ""
+for fixture in "$root"/test/fixtures/*.yml; do
+  check_one "$(basename "$fixture" .yml)" "$fixture"
+done
+
+exit $fail

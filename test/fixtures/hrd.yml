@@ -1,0 +1,46 @@
+project_name: hrd
+has_goreleaser: true
+project_description: "Multi-repo manager for git and jj with parallel execution and live status"
+goreleaser_version_pkg: "github.com/hugoh/hrd/cmd"
+has_homebrew_cask: true
+dev_watch: false
+has_test_int: false
+has_gen: true
+gen_sources: ["README.md.tpl", "cmd/**/*.go"]
+gen_outputs: ["README.md"]
+gen_cmd: ["go generate ./...", "dprint fmt README.md"]
+gen_check_cmd: "git diff --exit-code README.md"
+has_fuzz: false
+golangci_extra_disable: [
+  depguard,
+  exhaustruct,
+  godoclint,
+  ireturn,
+  testpackage,
+  varnamelen,
+]
+golangci_test_exclude_linters: [err113, noctx, varnamelen, goconst, gosec]
+golangci_revive_overrides: true
+golangci_extra_exclusions: []
+coverage_total: 90
+coverage_backends_override: true
+testcoverage_excludes: [
+  "main\\.go$ # Program entry point",
+  "cmd/genreadme/",
+  "internal/backend/backendtest/ # shared test helpers, exercised only from other packages' tests",
+]
+cog_omit_type: ""
+codecov_style: full
+codecov_ignore: ["main.go", "cmd/genreadme/**"]
+codecov_target: "80%"
+codecov_components:
+  - id: backends_git
+    name: backends/git
+    path: "backends/git/**"
+  - id: backends_jj
+    name: backends/jj
+    path: "backends/jj/**"
+dprint_has_excludes: false
+hk_has_golangci_step: false
+hk_has_goreleaser_step: true
+hk_prepush_with_go_ci: true

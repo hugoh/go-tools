@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+[%- if has_gen %]
+#MISE description="Run full CI pipeline (lint, tests, coverage, generated files check)"
+#MISE depends=["lint", "ci-core", "gen-check", "build"]
+[%- else %]
+#MISE description="Run full CI pipeline (lint, tests, coverage, build)"
+#MISE depends=["lint", "ci-core", "build"]
+[%- endif %]
+true

@@ -1,0 +1,25 @@
+---
+name: go-hk
+
+on:
+  workflow_call: {}
+
+jobs:
+  hk:
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code with full history
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Setup mise
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151
+      - name: hk checks
+        run: hk check --no-progress --profile ci --all
+      - name: Display hk log on failure
+        if: failure()
+        run: cat /home/runner/.local/state/hk/output.log

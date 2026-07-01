@@ -1,0 +1,46 @@
+---
+name: go-template-update
+
+on:
+  workflow_call:
+    secrets:
+      github_token:
+        required: true
+
+jobs:
+  update:
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
+      - name: Setup mise
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151
+      - name: Run copier update
+        run: copier update --UNSAFE --defaults -a .copier-answers.yml
+      - name: Open PR if template changed
+        env:
+          GITHUB_TOKEN: ${{ secrets.github_token }}
+        run: |
+          if git diff --quiet; then
+            echo "No template changes"
+            exit 0
+          fi
+          BRANCH="go-tools-update/$(date +%Y%m%d)"
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}"
+          git checkout -b "${BRANCH}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: update from go-tools template"
+          git push origin "${BRANCH}" --force
+          gh pr create \
+            --title "chore: update from go-tools template" \
+            --body "Automated \`copier update\` from [hugoh/go-tools](https://github.com/hugoh/go-tools). Review the diff before merging." \
+            --head "${BRANCH}" \
+            --base main 2>/dev/null || echo "PR already open for ${BRANCH}"

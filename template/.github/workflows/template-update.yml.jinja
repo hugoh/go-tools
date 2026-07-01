@@ -1,0 +1,20 @@
+---
+name: Update from go-tools template
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  repository_dispatch:
+    types: [go-tools-updated]
+  workflow_dispatch: {}
+
+permissions: {}
+
+jobs:
+  update:
+    uses: hugoh/go-tools/.github/workflows/go-template-update.yml@[[ _copier_conf.vcs_ref_hash ]]
+    permissions:
+      contents: write
+      pull-requests: write
+    secrets:
+      github_token: ${{ secrets.GITHUB_TOKEN }}

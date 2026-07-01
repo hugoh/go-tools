@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+[%- if has_test_int %]
+#MISE description="Run core CI checks (test, coverage, integration)"
+#MISE depends=["coverage", "test-int"]
+[%- else %]
+#MISE description="Run core CI checks (test, coverage)"
+#MISE depends=["coverage"]
+[%- endif %]
+true

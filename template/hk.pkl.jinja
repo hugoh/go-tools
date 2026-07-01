@@ -1,0 +1,67 @@
+amends "package://github.com/jdx/hk/releases/download/v1.45.0/hk@1.45.0#/Config.pkl"
+import "package://github.com/jdx/hk/releases/download/v1.45.0/hk@1.45.0#/Builtins.pkl"
+
+local linters = new Mapping<String, Step> {
+[%- if hk_has_golangci_step %]
+  ["golangci-lint"] = (Builtins.golangci_lint) {
+    profiles = List("!ci")
+  }
+[%- endif %]
+  ["gomod-tidy"] = Builtins.gomod_tidy
+  ["actionlint"] = Builtins.actionlint
+  ["conflicts"] = Builtins.check_merge_conflict
+  ["case-conflict"] = Builtins.check_case_conflict
+  ["large-files"] = Builtins.check_added_large_files
+  ["executables"] = Builtins.check_executables_have_shebangs
+  ["gitleaks"] = Builtins.gitleaks
+  ["ghalint"] = Builtins.ghalint_workflow
+  ["markdown"] = Builtins.rumdl
+  ["dprint"] = Builtins.dprint
+  ["zizmor"] = Builtins.zizmor
+  ["shellcheck"] = Builtins.shellcheck
+  ["conventional-commit"] {
+    check = "cog check --from-latest-tag"
+  }
+  ["duplication"] = {
+    check = "cpd"
+  }
+[%- if hk_has_goreleaser_step %]
+  ["goreleaser"]= {
+    check = "goreleaser check"
+  }
+[%- endif %]
+}
+
+hooks {
+  ["pre-commit"] {
+    stash = "git"
+    steps = linters
+  }
+[%- if hk_prepush_with_go_ci %]
+  ["pre-push"] {
+    steps = new Mapping<String, Step> {
+      ... linters
+      ["go-ci"] {
+        check = "mise ci"
+      }
+    }
+  }
+[%- else %]
+  ["pre-push"] {
+    steps = linters
+  }
+[%- endif %]
+  ["fix"] {
+    fix = true
+    steps = linters
+  }
+  ["check"] {
+    steps = linters
+  }
+  ["commit-msg"] {
+    steps = new Mapping<String, Step> {
+      ["check-conventional-commit"] = Builtins.check_conventional_commit
+      ["cocogitto_commit_msg"] = Builtins.cocogitto_commit_msg
+    }
+  }
+}

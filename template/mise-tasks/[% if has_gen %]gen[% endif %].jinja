@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+#MISE description="Regenerate committed generated files"
+#MISE sources=[[ gen_sources | tojson ]]
+#MISE outputs=[[ gen_outputs | tojson ]]
+set -e
+[%- for cmd in gen_cmd %]
+[[ cmd ]]
+[%- endfor %]
