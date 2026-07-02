@@ -27,4 +27,7 @@ gh api "repos/${repo}/branches/${branch}/protection" \
 }
 EOF
 
+echo "Enabling auto-merge on ${repo} (needed for go-template-update.yml's automerge PRs)..."
+gh repo edit "${repo}" --enable-auto-merge
+
 echo "Done."
