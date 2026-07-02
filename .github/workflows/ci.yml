@@ -29,9 +29,31 @@ jobs:
         if: failure()
         run: cat /home/runner/.local/state/hk/output.log
 
+  changes:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    permissions: {}
+    outputs:
+      template: ${{ steps.filter.outputs.template }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
+      - name: Check for template-relevant changes
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        id: filter
+        with:
+          filters: |
+            template:
+              - 'template/**'
+              - '!template/mise.toml.jinja'
+              - 'copier.yml'
+              - '.github/workflows/go-*.yml'
+
   notify-consumers:
-    needs: [hk]
-    if: github.event_name == 'push'
+    needs: [hk, changes]
+    if: github.event_name == 'push' && needs.changes.outputs.template == 'true'
     timeout-minutes: 10
     runs-on: ubuntu-latest
     permissions: {}

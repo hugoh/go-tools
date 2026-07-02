@@ -1,3 +1,7 @@
+# copier: applied only on first-time `copier copy` (see copier.yml's
+# _skip_if_exists) — edits here don't reach already-initialized consumers
+# via `copier update`, so this file is excluded from notify-consumers'
+# path filter.
 [tools]
 go = "1.26.4"
 "go:github.com/vladopajic/go-test-coverage/v2" = "2.18.8"
