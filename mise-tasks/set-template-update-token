@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+#MISE description="Prompt for a new TEMPLATE_UPDATE_TOKEN and set it on every repo listed in consumers.txt"
+set -euo pipefail
+
+root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+name="TEMPLATE_UPDATE_TOKEN"
+
+read -rsp "Paste new ${name} value (hidden, not echoed): " value
+echo
+
+while IFS= read -r repo; do
+  [ -z "$repo" ] && continue
+  echo "Setting ${name} on ${repo}..."
+  printf '%s' "$value" | gh secret set "$name" --repo "$repo"
+done < "$root/consumers.txt"
+
+echo "Done."

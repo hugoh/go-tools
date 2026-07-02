@@ -22,18 +22,30 @@ Templates the config files every Go repo carries: `.golangci.yml`, `.testcoverag
    Answer the prompts (`has_test_int`, `has_gen`, `coverage_total`, the `golangci_*` lists, etc). This generates every file above, including a starter `mise.toml` (which already pins `copier`, so it's mise-managed from here on), plus `.copier-answers.yml` to track the template going forward.
 3. Push to GitHub, add the `CODECOV_TOKEN` secret if using Codecov, confirm Renovate is enabled (it'll pick up `.renovaterc.json` automatically).
 4. `mise install && hk install && mise run ci` locally to confirm everything's green before the first push.
+5. `mise run gh-repo-setup owner/repo` — one-time branch protection (PR required, `hk`/`goci`/`release` required checks, no direct pushes), auto-merge, and delete-branch-on-merge.
+6. Add the repo to `consumers.txt` in this repo, and make sure it has the `TEMPLATE_UPDATE_TOKEN` secret set (see [Required secrets](#required-secrets)) so it can receive template updates.
 
 ### Keeping a repo up to date
 
 Each repo's `.github/workflows/template-update.yml` (itself part of the template) calls `go-template-update.yml`, which runs `copier update` and opens a PR when the template has changed. It's triggered three ways:
 
-- **`repository_dispatch`** — `go-tools`'s own CI fires a `go-tools-updated` event to every repo listed in `consumers.txt` after a push to `main`. Needs a `DISPATCH_TOKEN` secret (repo-scoped PAT) on `go-tools`.
+- **`repository_dispatch`** — `go-tools`'s own CI fires a `go-tools-updated` event to every repo listed in `consumers.txt` after a push to `main` that actually touches the template (see the `changes` job in `.github/workflows/ci.yml`). Needs a `DISPATCH_TOKEN` secret (repo-scoped PAT) on `go-tools`.
 - **Weekly cron** — safety net in case a dispatch is missed.
 - **`workflow_dispatch`** — manual trigger.
 
 To do it by hand instead: `copier update` inside the repo (re-applies the template and 3-way-merges against local edits, recorded in `.copier-answers.yml`).
 
 See `copier.yml` in this repo for the full list of variables (coverage thresholds, tool version pins, per-project golangci-lint deltas, etc).
+
+### Required secrets
+
+- **`DISPATCH_TOKEN`** (on `go-tools` only) — repo-scoped [fine-grained PAT](https://github.com/settings/personal-access-tokens) used to fire `repository_dispatch` at every repo in `consumers.txt`. Needs **Contents: Read** and **Metadata: Read** on `go-tools`, plus permission to dispatch to (i.e. be added as a collaborator/have access to) every consumer repo.
+- **`TEMPLATE_UPDATE_TOKEN`** (on every consumer repo) — [fine-grained PAT](https://github.com/settings/personal-access-tokens) `go-template-update.yml` uses to push the update branch and open/auto-merge the PR. Its repository access must cover every repo in `consumers.txt`, and it needs all three of:
+  - **Contents: Read and write** — to push the `go-tools-update/<sha>` branch.
+  - **Pull requests: Read and write** — to open and auto-merge the PR. Missing this makes `git push` succeed but `gh pr create` fail with `Resource not accessible by personal access token`; `go-template-update.yml` treats that as fatal, so it shows up as a failed run rather than a silent no-op.
+  - **Workflows: Read and write** — the pushed branch includes changes to `.github/workflows/ci.yml` and `.github/workflows/template-update.yml` (the pinned `vcs_ref_hash` bumps on every `copier update`); GitHub rejects PAT pushes touching `.github/workflows/*` without this.
+
+  Set it with `mise run set-template-update-token` — prompts for the value with echo suppressed (don't pipe a secret in via `echo`, it'll land in shell history) and pushes it to every repo in `consumers.txt`.
 
 ---
 

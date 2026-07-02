@@ -43,9 +43,25 @@ jobs:
           git add -A
           git commit -m "chore: update from go-tools template"
           git push origin "${BRANCH}" --force
-          gh pr create \
+
+          if ! CREATE_OUT=$(gh pr create \
             --title "chore: update from go-tools template (${COMMIT})" \
             --body "Automated \`copier update\` from [hugoh/go-tools](https://github.com/hugoh/go-tools)@${COMMIT}. Auto-merges once hk/goci/release pass — review the diff first if you want to intervene." \
             --head "${BRANCH}" \
-            --base main || echo "gh pr create failed (PR may already exist for ${BRANCH})"
-          gh pr merge --auto --squash "${BRANCH}" || echo "gh pr merge failed (may already be merged or automerge already set)"
+            --base main 2>&1); then
+            if ! echo "$CREATE_OUT" | grep -qi "already exists"; then
+              echo "$CREATE_OUT" >&2
+              echo "::error::gh pr create failed for ${BRANCH}"
+              exit 1
+            fi
+            echo "PR already exists for ${BRANCH}, continuing"
+          fi
+
+          if ! MERGE_OUT=$(gh pr merge --auto --squash "${BRANCH}" 2>&1); then
+            if ! echo "$MERGE_OUT" | grep -qiE "already merged|auto-merge is already"; then
+              echo "$MERGE_OUT" >&2
+              echo "::error::gh pr merge failed for ${BRANCH}"
+              exit 1
+            fi
+            echo "PR for ${BRANCH} already merged or automerge already set, continuing"
+          fi
