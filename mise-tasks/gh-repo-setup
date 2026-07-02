@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#MISE description="One-time GitHub repo setup: branch protection (PR + hk/goci/release required, no direct pushes), auto-merge, and delete-branch-on-merge"
+#MISE description="One-time GitHub repo setup: branch protection (PR + hk/goci[/release] required, no direct pushes), auto-merge, and delete-branch-on-merge"
 #USAGE arg "<repo>" help="owner/repo to configure (e.g. hugoh/hrd)"
 #USAGE flag "--branch <branch>" help="Branch to protect" default="main"
 set -euo pipefail
@@ -8,16 +8,23 @@ set -euo pipefail
 repo="${usage_repo}"
 branch="${usage_branch:-main}"
 
-echo "Configuring branch protection for ${repo}@${branch} (required: hk, goci, release; PRs required; no direct pushes, including admins)..."
+contexts=("hk / hk" "goci / goci")
+if gh api "repos/${repo}/contents/.goreleaser.yml" >/dev/null 2>&1; then
+  contexts+=("release / release")
+fi
+
+echo "Configuring branch protection for ${repo}@${branch} (required: ${contexts[*]}; PRs required; no direct pushes, including admins)..."
+
+contexts_json=$(printf '%s\n' "${contexts[@]}" | jq -R . | jq -s .)
 
 gh api "repos/${repo}/branches/${branch}/protection" \
   --method PUT \
   -H "Accept: application/vnd.github+json" \
-  --input - <<'EOF'
+  --input - <<EOF
 {
   "required_status_checks": {
     "strict": true,
-    "contexts": ["hk / hk", "goci / goci", "release / release"]
+    "contexts": ${contexts_json}
   },
   "enforce_admins": true,
   "required_pull_request_reviews": {
