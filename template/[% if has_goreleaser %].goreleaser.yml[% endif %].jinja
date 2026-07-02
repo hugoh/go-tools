@@ -1,4 +1,13 @@
 version: 2
+[%- if goreleaser_before_hooks %]
+
+before:
+  hooks:
+[%- for cmd in goreleaser_before_hooks %]
+    - [[ cmd ]]
+[%- endfor %]
+[%- endif %]
+
 builds:
   - env:
       - CGO_ENABLED=0
@@ -40,6 +49,13 @@ nfpms:
       - deb
       - rpm
     bindir: /usr/bin
+[%- if nfpm_extra_contents %]
+    contents:
+[%- for c in nfpm_extra_contents %]
+      - src: [[ c.src ]]
+        dst: [[ c.dst ]]
+[%- endfor %]
+[%- endif %]
 [%- if has_homebrew_cask %]
 
 homebrew_casks:

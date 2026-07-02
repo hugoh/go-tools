@@ -36,6 +36,18 @@ has_homebrew_cask:
   help: Also publish a Homebrew cask on release (needs a TAP_GITHUB_TOKEN secret)
   when: "[[ has_goreleaser ]]"
 
+goreleaser_before_hooks:
+  type: json
+  default: []
+  help: "Shell commands to run before goreleaser build (e.g. release-time codegen): list of strings"
+  when: "[[ has_goreleaser ]]"
+
+nfpm_extra_contents:
+  type: json
+  default: []
+  help: "Extra files to include in deb/rpm packages: list of {src, dst} objects"
+  when: "[[ has_goreleaser ]]"
+
 dev_watch:
   type: bool
   default: false
