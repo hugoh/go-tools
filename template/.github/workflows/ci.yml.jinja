@@ -22,6 +22,8 @@ jobs:
     secrets:
       codecov_token: ${{ secrets.CODECOV_TOKEN }}
 
+[%- if has_goreleaser %]
+
   release:
     needs: [hk, goci]
     uses: hugoh/go-tools/.github/workflows/go-release.yml@[[ _copier_conf.vcs_ref_hash ]]
@@ -30,3 +32,4 @@ jobs:
     secrets:
       gh_token: ${{ secrets.GITHUB_TOKEN }}
       tap_github_token: ${{ secrets.TAP_GITHUB_TOKEN }}
+[%- endif %]

@@ -7,7 +7,9 @@ go = "1.26.4"
 "go:github.com/vladopajic/go-test-coverage/v2" = "2.18.8"
 "go:golang.org/x/vuln/cmd/govulncheck" = "1.4.0"
 golangci-lint = "2.12.2"
+[%- if has_goreleaser %]
 goreleaser = "2.16.0"
+[%- endif %]
 cocogitto = "7.0.0"
 gotestsum = "1.13.0"
 hk = "1.48.0"
