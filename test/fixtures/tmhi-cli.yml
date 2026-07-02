@@ -11,9 +11,9 @@ golangci_test_exclude_linters: [err113, funlen, varnamelen]
 golangci_revive_overrides: false
 golangci_extra_exclusions: []
 coverage_total: 80
-coverage_backends_override: false
+testcoverage_overrides: []
 testcoverage_excludes: ["main\\.go$"]
-cog_omit_type: ""
+cog_omit_types: []
 codecov_style: simple
 codecov_ignore: ["main.go"]
 dprint_has_excludes: true

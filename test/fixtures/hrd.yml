@@ -25,13 +25,13 @@ golangci_test_exclude_linters: [err113, noctx, varnamelen, goconst, gosec]
 golangci_revive_overrides: true
 golangci_extra_exclusions: []
 coverage_total: 90
-coverage_backends_override: true
+testcoverage_overrides: [{ path: "backends/", threshold: 100 }]
 testcoverage_excludes: [
   "main\\.go$ # Program entry point",
   "cmd/genreadme/",
   "internal/backend/backendtest/ # shared test helpers, exercised only from other packages' tests",
 ]
-cog_omit_type: ""
+cog_omit_types: []
 codecov_style: full
 codecov_ignore: ["main.go", "cmd/genreadme/**"]
 codecov_target: "80%"

@@ -11,9 +11,9 @@ golangci_extra_exclusions:
   - path: "thresholds.go"
     linters: [mnd]
 coverage_total: 100
-coverage_backends_override: false
+testcoverage_overrides: []
 testcoverage_excludes: []
-cog_omit_type: "doc"
+cog_omit_types: ["doc"]
 codecov_style: simple
 codecov_ignore: ["main.go"]
 dprint_has_excludes: true

@@ -12,9 +12,9 @@ golangci_test_exclude_linters: [err113, noctx, varnamelen]
 golangci_revive_overrides: false
 golangci_extra_exclusions: []
 coverage_total: 80
-coverage_backends_override: false
+testcoverage_overrides: []
 testcoverage_excludes: []
-cog_omit_type: "lint"
+cog_omit_types: ["lint"]
 codecov_style: simple
 codecov_ignore: ["internal/version"]
 dprint_has_excludes: true

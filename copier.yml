@@ -123,20 +123,20 @@ coverage_total:
   default: 90
   help: go-test-coverage total threshold
 
-coverage_backends_override:
-  type: bool
-  default: false
-  help: Add a backends/ path override at 100% threshold
+testcoverage_overrides:
+  type: json
+  default: []
+  help: "Per-path coverage threshold overrides for .testcoverage.yml: list of {path, threshold}"
 
 testcoverage_excludes:
   type: json
   default: []
   help: List of exclude path patterns for .testcoverage.yml
 
-cog_omit_type:
-  type: str
-  default: ""
-  help: "Commit type to omit from changelog in cog.toml (e.g. doc, lint); empty = none"
+cog_omit_types:
+  type: json
+  default: []
+  help: "Commit types to omit from changelog in cog.toml (e.g. doc, lint): list of strings"
 
 codecov_style:
   type: str
