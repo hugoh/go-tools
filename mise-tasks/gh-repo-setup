@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#MISE description="Require a PR (with hk/goci/release passing) to merge to a branch — blocks direct pushes, including by admins"
+#MISE description="One-time GitHub repo setup: branch protection (PR + hk/goci/release required, no direct pushes) and auto-merge enabled"
 #USAGE arg "<repo>" help="owner/repo to configure (e.g. hugoh/hrd)"
 #USAGE flag "--branch <branch>" help="Branch to protect" default="main"
 set -euo pipefail
