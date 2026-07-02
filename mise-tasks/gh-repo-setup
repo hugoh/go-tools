@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#MISE description="One-time GitHub repo setup: branch protection (PR + hk/goci/release required, no direct pushes) and auto-merge enabled"
+#MISE description="One-time GitHub repo setup: branch protection (PR + hk/goci/release required, no direct pushes), auto-merge, and delete-branch-on-merge"
 #USAGE arg "<repo>" help="owner/repo to configure (e.g. hugoh/hrd)"
 #USAGE flag "--branch <branch>" help="Branch to protect" default="main"
 set -euo pipefail
@@ -27,7 +27,7 @@ gh api "repos/${repo}/branches/${branch}/protection" \
 }
 EOF
 
-echo "Enabling auto-merge on ${repo} (needed for go-template-update.yml's automerge PRs)..."
-gh repo edit "${repo}" --enable-auto-merge
+echo "Enabling auto-merge and delete-branch-on-merge on ${repo}..."
+gh repo edit "${repo}" --enable-auto-merge --delete-branch-on-merge
 
 echo "Done."
