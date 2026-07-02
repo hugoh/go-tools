@@ -11,6 +11,9 @@ jobs:
   update:
     timeout-minutes: 30
     runs-on: ubuntu-latest
+    concurrency:
+      group: go-template-update-${{ github.repository }}
+      cancel-in-progress: false
     permissions:
       contents: write
       pull-requests: write
@@ -31,7 +34,8 @@ jobs:
             echo "No template changes"
             exit 0
           fi
-          BRANCH="go-tools-update/$(date +%Y%m%d)"
+          COMMIT=$(grep '^_commit:' .copier-answers.yml | awk '{print $2}')
+          BRANCH="go-tools-update/${COMMIT}"
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}"
           git checkout -b "${BRANCH}"
           git config user.name "github-actions[bot]"
@@ -40,8 +44,8 @@ jobs:
           git commit -m "chore: update from go-tools template"
           git push origin "${BRANCH}" --force
           gh pr create \
-            --title "chore: update from go-tools template" \
-            --body "Automated \`copier update\` from [hugoh/go-tools](https://github.com/hugoh/go-tools). Auto-merges once hk/goci/release pass — review the diff first if you want to intervene." \
+            --title "chore: update from go-tools template (${COMMIT})" \
+            --body "Automated \`copier update\` from [hugoh/go-tools](https://github.com/hugoh/go-tools)@${COMMIT}. Auto-merges once hk/goci/release pass — review the diff first if you want to intervene." \
             --head "${BRANCH}" \
-            --base main 2>/dev/null || echo "PR already open for ${BRANCH}"
-          gh pr merge --auto --squash "${BRANCH}"
+            --base main || echo "gh pr create failed (PR may already exist for ${BRANCH})"
+          gh pr merge --auto --squash "${BRANCH}" || echo "gh pr merge failed (may already be merged or automerge already set)"
