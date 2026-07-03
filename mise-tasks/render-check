@@ -61,4 +61,4 @@ for fixture in "$root"/test/fixtures/*.yml; do
   check_one "$(basename "$fixture" .yml)" "$fixture"
 done
 
-exit $fail
+exit "$fail"
