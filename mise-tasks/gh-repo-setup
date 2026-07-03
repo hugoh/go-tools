@@ -5,7 +5,7 @@
 set -euo pipefail
 
 # shellcheck disable=SC2154 # usage_repo/usage_branch are injected by mise from the USAGE spec above
-repo="${usage_repo}"
+repo="$usage_repo"
 branch="${usage_branch:-main}"
 
 contexts=("hk / hk" "goci / goci")
@@ -35,6 +35,6 @@ gh api "repos/${repo}/branches/${branch}/protection" \
 EOF
 
 echo "Enabling auto-merge and delete-branch-on-merge on ${repo}..."
-gh repo edit "${repo}" --enable-auto-merge --delete-branch-on-merge
+gh repo edit "$repo" --enable-auto-merge --delete-branch-on-merge
 
 echo "Done."

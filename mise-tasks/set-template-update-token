@@ -9,7 +9,7 @@ read -rsp "Paste new ${name} value (hidden, not echoed): " value
 echo
 
 while IFS= read -r repo; do
-  [ -z "$repo" ] && continue
+  [ "$repo" = "" ] && continue
   echo "Setting ${name} on ${repo}..."
   printf '%s' "$value" | gh secret set "$name" --repo "$repo"
 done < "$root/consumers.txt"

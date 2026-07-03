@@ -17,12 +17,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code with full history
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           persist-credentials: false
           fetch-depth: 0
       - name: Setup mise
-        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
       - name: hk checks
         run: hk check --no-progress --profile ci --all
       - name: Display hk log on failure
@@ -38,7 +38,7 @@ jobs:
       mise_toml_only_count: ${{ steps.filter.outputs.mise_toml_only_count }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           persist-credentials: false
       - name: Check for template-relevant changes
@@ -67,7 +67,7 @@ jobs:
     permissions: {}
     steps:
       - name: Checkout code
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           persist-credentials: false
       - name: Dispatch update event to consumer repos
