@@ -9,6 +9,7 @@ gitleaks = "8.30.1"
 dprint = "0.54.0"
 rumdl = "0.2.22"
 zizmor = "1.26.1"
+typos = "1.47.2"
 hk = "1.49.0"
 goreleaser = "2.16.0"
 
