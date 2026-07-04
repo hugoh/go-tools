@@ -2,9 +2,8 @@
 name: Update from go-tools template
 
 on:
-  push:
-    branches:
-      - renovate/**
+  schedule:
+    - cron: "0 6 * * 1"
   workflow_dispatch: {}
 
 permissions: {}

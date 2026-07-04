@@ -29,12 +29,18 @@ Templates the config files every Go repo carries: `.golangci.yml`, `.testcoverag
 
 Each repo's `.github/workflows/template-update.yml` (itself part of the template) calls `go-template-update.yml`, which runs `copier update` and opens a PR when the template has changed. It's triggered two ways:
 
-- **Push to a `renovate/**` branch** — Renovate already tracks the pinned `hugoh/go-tools/...@<sha> # vX.Y.Z` reference in each repo's `ci.yml` via the `github-actions` manager (see `hugoh/go-tools`'s `packageRules` entry exempting itself from `schedule:monthly`, so this fires promptly after a new tag). When Renovate opens its version-bump PR, that same push triggers a `copier update` run, so the repo re-syncs against current `go-tools` at (or shortly after) the moment it learns of a new release. No cross-repo secret is needed for this — it's a same-repo `on: push` trigger.
-- **`workflow_dispatch`** — manual trigger, e.g. to bootstrap a repo onto a new template-update workflow revision, or to force a resync without waiting on Renovate.
+- **Weekly cron** — every Monday at 06:00.
+- **`workflow_dispatch`** — manual trigger, e.g. to bootstrap a repo onto a new template-update workflow revision, or to force an immediate resync instead of waiting for cron.
+
+The four self-referential `hugoh/go-tools/...@<sha>` pins (`go-hk.yml`, `go-ci.yml`, `go-release.yml`, `go-template-update.yml`) are pinned by `copier update` itself, not Renovate — the Renovate preset (`default.json`) explicitly disables the `hugoh/go-tools` package for the `github-actions` manager. Copier's 3-way merge assumes it's the sole writer of anything it templates; letting Renovate *also* bump these same lines made every `copier update` conflict with whatever Renovate had done in between (found the hard way — a `copier update` run failing with literal `<<<<<<<` conflict markers on that exact line, repeatedly, no matter how the underlying discrepancy was patched). Renovate still manages every other action pin fleet-wide as usual; this exclusion is scoped to `hugoh/go-tools` only.
 
 To do it by hand instead: `copier update` inside the repo (re-applies the template and 3-way-merges against local edits, recorded in `.copier-answers.yml`).
 
 See `copier.yml` in this repo for the full list of variables (coverage thresholds, tool version pins, per-project golangci-lint deltas, etc).
+
+### Releasing go-tools itself
+
+`go-tools`'s own `ci.yml` has a `release` job (push-to-main only, after `hk` passes) that runs `cocogitto bump --auto` and pushes the resulting tag using the default `GITHUB_TOKEN` — no PAT needed, since pushing a tag isn't subject to the workflow-file write restriction that `TEMPLATE_UPDATE_TOKEN` exists for. Version bumps follow Conventional Commits as usual (`fix:` → patch, `feat:` → minor, breaking change → major); merge a conventional-commit PR to main and a new tag appears automatically. No manual `git tag` is needed.
 
 ### Required secrets
 

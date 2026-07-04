@@ -33,8 +33,7 @@
     {
       "matchManagers": ["github-actions"],
       "matchPackageNames": ["hugoh/go-tools"],
-      "schedule": ["at any time"],
-      "minimumReleaseAge": "0 days"
+      "enabled": false
     }
   ],
   "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths"]
