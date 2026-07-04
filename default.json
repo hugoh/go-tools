@@ -29,6 +29,12 @@
       "matchUpdateTypes": ["major"],
       "groupName": "Major updates",
       "automerge": false
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "matchPackageNames": ["hugoh/go-tools"],
+      "schedule": ["at any time"],
+      "minimumReleaseAge": "0 days"
     }
   ],
   "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths"]
