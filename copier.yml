@@ -1,4 +1,5 @@
 _min_copier_version: "9.0.0"
+_src_path: https://github.com/hugoh/go-tools.git
 _answers_file: .copier-answers.yml
 _subdirectory: template
 _envops:
