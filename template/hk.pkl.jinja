@@ -16,7 +16,13 @@ local Common = new Group {
     ["conflicts"] = Builtins.check_merge_conflict
     ["trailing-ws"] = Builtins.trailing_whitespace
     ["line-endings"] = Builtins.mixed_line_ending
-    ["newlines"] = Builtins.newlines
+    // .copier-answers.yml is written entirely by copier's own YAML
+    // serializer, not rendered from a template file — it sometimes appends a
+    // trailing blank line on `copier update`, which would otherwise fail this
+    // check on every automated template-update PR
+    ["newlines"] = (Builtins.newlines) {
+      exclude = List(".copier-answers.yml")
+    }
     ["case-conflict"] = Builtins.check_case_conflict
     ["large-files"] = Builtins.check_added_large_files
     ["executables"] = Builtins.check_executables_have_shebangs
