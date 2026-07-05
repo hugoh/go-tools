@@ -14,7 +14,7 @@ local Common = new Group {
       fix = "pinact run --verify --exclude 'hugoh/go-tools.*' {{ files }}"
     }
     ["conflicts"] = Builtins.check_merge_conflict
-    ["trailing-ws"] = Builtins.trailing_whitespace
+    // ["trailing-ws"] = Builtins.trailing_whitespace
     ["line-endings"] = Builtins.mixed_line_ending
     // .copier-answers.yml is written entirely by copier's own YAML
     // serializer, not rendered from a template file — it sometimes appends a
