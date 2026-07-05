@@ -34,6 +34,21 @@ local linters = new Mapping<String, Step> {
     check = "shellharden --check {{ files }}"
     fix = "shellharden --replace {{ files }}"
   }
+  ["ruff"] = {
+    glob = List("template/_tasks/merge_mise_tools.py")
+    check = "ruff check {{ files }}"
+    fix = "ruff check --fix {{ files }}"
+  }
+  ["ruff-format"] = {
+    glob = List("template/_tasks/merge_mise_tools.py")
+    check = "ruff format --check {{ files }}"
+    fix = "ruff format {{ files }}"
+  }
+  ["merge-mise-tools-test"] = {
+    glob = List("template/_tasks/test_*.py")
+    check = "python3 -m unittest discover -s template/_tasks/ -v"
+    profiles = List("!ci")
+  }
   ["render-check"] = {
     check = "mise run render-check"
   }

@@ -12,6 +12,7 @@ zizmor = "1.26.1"
 typos = "1.47.2"
 hk = "1.49.0"
 goreleaser = "2.16.0"
+ruff = "0.11.4"
 cocogitto = "7.0.0"
 
 [settings]

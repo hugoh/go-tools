@@ -25,7 +25,7 @@ jobs:
       - name: Setup mise
         uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
       - name: Run copier update
-        run: copier update -f
+        run: copier update -f --trust
       - name: Verify template update didn't break anything
         run: hk check --no-progress --profile ci --all --no-fail-fast
       - name: Open PR if template changed

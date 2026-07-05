@@ -54,6 +54,10 @@ local linters = new Mapping<String, Step> {
   ["conventional-commit"] {
     check = "cog check --from-latest-tag"
   }
+  ["govulncheck"] = {
+    check = "govulncheck ./..."
+    profiles = List("!ci")
+  }
   ["duplication"] = {
     check = "cpd"
   }
