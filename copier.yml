@@ -9,6 +9,14 @@ _envops:
 _skip_if_exists:
   - mise.toml
 
+_exclude:
+  - _tasks/test_merge_mise_tools.py
+  - _tasks/__pycache__
+  - _tools_list.toml
+
+_tasks:
+  - "python3 _tasks/merge_mise_tools.py --self-destruct"
+
 project_name:
   type: str
   help: "Project/binary name (e.g. hrd) — used in .goreleaser.yml and its GitHub homepage URL"

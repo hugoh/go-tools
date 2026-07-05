@@ -2,6 +2,6 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["./go-renovaterc.json"],
   "mise": {
-    "managerFilePatterns": ["/^template/mise\\.toml\\.jinja$/"]
+    "managerFilePatterns": ["/^template/_tools_list\\.toml\\.jinja$/"]
   }
 }
