@@ -151,5 +151,66 @@ class TestMerge(unittest.TestCase):
         self.assertIn('ruff = "0.11.4"', result)
 
 
+class TestMergePreservesBlankLines(unittest.TestCase):
+    """New tools insert after last tool, preserving blank separator before next section."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.TemporaryDirectory()
+
+    def tearDown(self):
+        self.tmpdir.cleanup()
+
+    def _write(self, path, content):
+        p = os.path.join(self.tmpdir.name, path)
+        with open(p, "w") as f:
+            f.write(content)
+
+    def _read(self, path):
+        p = os.path.join(self.tmpdir.name, path)
+        with open(p) as f:
+            return f.read()
+
+    def test_preserves_blank_line_before_next_section(self):
+        self._write(
+            ".mise-desired.toml",
+            '[tools]\n"go:golang.org/x/vuln/cmd/govulncheck" = "1.1.4"\n',
+        )
+        self._write(
+            "mise.toml",
+            "[tools]\n"
+            'go = "1.26.4"\n'
+            'jj = "0.42.0"\n'
+            '"npm:cpd" = "5.0.11"\n'
+            '"go:golang.org/x/tools/cmd/deadcode" = "0.46.0"\n'
+            "\n"
+            "[env]\n"
+            'COVEROUT = "cover.out"\n',
+        )
+        from merge_mise_tools import main
+
+        original_cwd = os.getcwd()
+        try:
+            os.chdir(self.tmpdir.name)
+            main()
+            result = self._read("mise.toml")
+        finally:
+            os.chdir(original_cwd)
+
+        lines = result.splitlines(keepends=True)
+        new_tool_line = 'go:golang.org/x/vuln/cmd/govulncheck" = "1.1.4"\n'
+        new_tool_idx = None
+        for i, line in enumerate(lines):
+            if "govulncheck" in line:
+                new_tool_idx = i
+                break
+
+        self.assertIsNotNone(new_tool_idx)
+        # tool inserted right after last existing tool
+        self.assertIn('"go:golang.org/x/tools/cmd/deadcode"', lines[new_tool_idx - 1])
+        # blank line between new tool and next section
+        self.assertEqual(lines[new_tool_idx + 1].strip(), "")
+        self.assertIn("[env]", lines[new_tool_idx + 2])
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -79,6 +79,11 @@ def main():
         insert = "[tools]\n"
     else:
         insert_pos = tools_end if tools_end is not None else len(lines)
+        if insert_pos != len(lines):
+            for i in range(insert_pos - 1, tools_start, -1):
+                if lines[i].strip():
+                    insert_pos = i + 1
+                    break
         insert = ""
 
     for key in sorted(missing):
