@@ -15,6 +15,7 @@ _exclude:
   - _tools_list.toml
 
 _tasks:
+  - "mise trust"
   - "python3 _tasks/merge_mise_tools.py --self-destruct"
 
 project_name:
