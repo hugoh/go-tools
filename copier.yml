@@ -60,7 +60,7 @@ has_test_int:
 
 test_int_cmd:
   type: str
-  default: "test ! -d internal || gotestsum -- -race -tags=integration ./internal/..."
+  default: "test ! -d internal || gotestsum -- -count=1 -race -tags=integration ./internal/..."
   help: Shell command for the test-int mise task
   when: "[[ has_test_int ]]"
 
