@@ -16,7 +16,7 @@ render_one() {
   local tmpdir="$rootdir/$safe"
   mkdir "$tmpdir"
 
-  local copier_args=(copy --defaults -d project_name="$label")
+  local copier_args=(copy --trust --defaults -d project_name="$label")
   if [[ -n "$data_file" ]]; then
     copier_args+=(--data-file "$data_file")
   fi
