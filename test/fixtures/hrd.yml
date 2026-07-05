@@ -42,7 +42,6 @@ codecov_components:
   - id: backends_jj
     name: backends/jj
     path: "backends/jj/**"
-dprint_has_excludes: false
 hk_has_golangci_step: false
 hk_has_goreleaser_step: true
 hk_prepush_with_go_ci: true

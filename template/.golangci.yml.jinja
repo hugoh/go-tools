@@ -9,16 +9,9 @@ linters:
     - [[ l ]]
 [%- endfor %]
     - wsl
-[%- if golangci_revive_overrides %]
+[%- if golangci_settings %]
   settings:
-    revive:
-      rules:
-        - name: redefines-builtin-id
-          disabled: true
-        - name: exported
-          disabled: true
-        - name: unused-parameter
-        - name: unused-receiver
+[[ golangci_settings.rstrip() | indent(4, True) ]]
 [%- endif %]
   exclusions:
     rules:

@@ -39,6 +39,9 @@ local Common = new Group {
 
 local linters = new Mapping<String, Step> {
   ...Common.steps
+  ["golangci-lint-config"] = {
+    check = "golangci-lint config verify"
+  }
 [%- if hk_has_golangci_step %]
   ["golangci-lint"] = (Builtins.golangci_lint) {
     profiles = List("!ci")
