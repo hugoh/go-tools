@@ -8,9 +8,8 @@
   "yaml": {
   },
   "excludes": [
-    ".copier-answers.yml"[%- if dprint_has_excludes %],
-    "**/*-lock.json"
-[%- endif %]
+    ".copier-answers.yml",
+    "mise.toml"
   ],
   "plugins": [
     "https://plugins.dprint.dev/json-0.22.0.wasm",

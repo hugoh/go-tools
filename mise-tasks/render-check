@@ -5,60 +5,87 @@ set -euo pipefail
 root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 fail=0
 
-check_one() {
-  local label=$1 data_file=$2
-  local tmpdir
-  tmpdir=$(mktemp -d)
-  trap 'rm -rf "$tmpdir"' RETURN
+rootdir=$(mktemp -d)
 
-  echo "--- rendering: $label ---"
-  local copier_args=(copy --UNSAFE --overwrite --defaults -d project_name="$label")
+sanitize() { echo "$1" | tr '/' '_'; }
+
+render_one() {
+  local label=$1 data_file=$2
+  local safe
+  safe=$(sanitize "$label")
+  local tmpdir="$rootdir/$safe"
+  mkdir "$tmpdir"
+
+  local copier_args=(copy --defaults -d project_name="$label")
   if [[ -n "$data_file" ]]; then
     copier_args+=(--data-file "$data_file")
   fi
-  if ! copier "${copier_args[@]}" "$root" "$tmpdir" >/tmp/render-check-copier.log 2>&1; then
-    echo "FAIL ($label): copier render failed"
-    cat /tmp/render-check-copier.log
-    fail=1
-    return
-  fi
 
-  if ! shellcheck "$tmpdir"/mise-tasks/*; then
+  if ! copier "${copier_args[@]}" "$root" "$tmpdir" >"$tmpdir/copier.log" 2>&1; then
+    echo "FAIL ($label): copier render failed"
+    cat "$tmpdir/copier.log"
+    return 1
+  fi
+}
+
+# Phase 1: render all fixtures in parallel (copier is I/O bound)
+pids=()
+for fixture in "$root"/test/fixtures/*.yml; do
+  label=$(basename "$fixture" .yml)
+  render_one "$label" "$fixture" &
+  pids+=($!)
+done
+render_one "defaults" "" &
+pids+=($!)
+
+for pid in "${pids[@]}"; do
+  wait "$pid" || fail=1
+done
+
+# Phase 2: validate each rendered output serially (hk/pkl cache, goreleaser)
+for tmpdir in "$rootdir"/*/; do
+  [[ -d "$tmpdir" ]] || continue
+  label=$(grep '^project_name:' "$tmpdir/.copier-answers.yml" 2>/dev/null | awk '{print $2}')
+
+  echo "--- validating: $label ---"
+
+  if ! shellcheck "$tmpdir"/mise-tasks/* >"$tmpdir/shellcheck.log" 2>&1; then
     echo "FAIL ($label): shellcheck"
     fail=1
+    continue
   fi
 
-  if ! actionlint "$tmpdir"/.github/workflows/*.yml; then
+  if ! actionlint "$tmpdir"/.github/workflows/*.yml >"$tmpdir/actionlint.log" 2>&1; then
     echo "FAIL ($label): actionlint"
     fail=1
+    continue
   fi
 
-  if ! (cd "$tmpdir" && dprint check) >/tmp/render-check-dprint.log 2>&1; then
+  if ! (cd "$tmpdir" && dprint check) >"$tmpdir/dprint.log" 2>&1; then
     echo "FAIL ($label): dprint check"
-    cat /tmp/render-check-dprint.log
+    cat "$tmpdir/dprint.log"
     fail=1
+    continue
   fi
 
-  if ! (cd "$tmpdir" && hk validate) >/tmp/render-check-hk.log 2>&1; then
+  if ! (cd "$tmpdir" && hk validate) >"$tmpdir/hk.log" 2>&1; then
     echo "FAIL ($label): hk validate (hk.pkl)"
-    cat /tmp/render-check-hk.log
+    cat "$tmpdir/hk.log"
     fail=1
+    continue
   fi
 
   if [[ -f "$tmpdir/.goreleaser.yml" ]]; then
-    if ! (cd "$tmpdir" && git init -q && git remote add origin "https://github.com/hugoh/$label.git" && TAP_GITHUB_TOKEN=x goreleaser check) >/tmp/render-check-goreleaser.log 2>&1; then
+    if ! (cd "$tmpdir" && git init -q && git remote add origin "https://github.com/hugoh/$label.git" && TAP_GITHUB_TOKEN=x goreleaser check) >"$tmpdir/goreleaser.log" 2>&1; then
       echo "FAIL ($label): goreleaser check"
-      cat /tmp/render-check-goreleaser.log
+      cat "$tmpdir/goreleaser.log"
       fail=1
+      continue
     fi
   fi
 
   echo "ok: $label"
-}
-
-check_one "defaults" ""
-for fixture in "$root"/test/fixtures/*.yml; do
-  check_one "$(basename "$fixture" .yml)" "$fixture"
 done
 
+rm -rf "$rootdir"
 exit "$fail"

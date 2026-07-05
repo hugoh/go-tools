@@ -25,7 +25,7 @@ jobs:
       - name: Setup mise
         uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
       - name: Run copier update
-        run: copier update --UNSAFE --defaults -a .copier-answers.yml
+        run: copier update -f
       - name: Verify template update didn't break anything
         run: hk check --no-progress --profile ci --all --no-fail-fast
       - name: Open PR if template changed

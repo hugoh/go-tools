@@ -108,10 +108,10 @@ golangci_test_exclude_linters:
   default: ["err113", "funlen", "varnamelen"]
   help: Linters excluded for _test.go files
 
-golangci_revive_overrides:
-  type: bool
-  default: false
-  help: Add revive rule overrides (redefines-builtin-id/exported/unused-parameter/unused-receiver)
+golangci_settings:
+  type: str
+  default: ""
+  help: "Extra linter settings under linters.settings (raw YAML block, e.g. tagliatelle, revive, etc.)"
 
 golangci_extra_exclusions:
   type: json
@@ -159,11 +159,6 @@ codecov_components:
   default: []
   help: "List of {id, name, path} component definitions"
   when: "[[ codecov_style == 'full' ]]"
-
-dprint_has_excludes:
-  type: bool
-  default: true
-  help: dprint.json excludes **/*-lock.json
 
 hk_has_golangci_step:
   type: bool
