@@ -61,3 +61,4 @@ jobs:
           fi
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}"
           git push origin "${TAG}"
+          gh release create "${TAG}" --generate-notes
