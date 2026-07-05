@@ -1,6 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended", "github>hugoh/go-tools"],
+  "extends": ["./go-renovaterc.json"],
   "mise": {
     "managerFilePatterns": ["/^template/mise\\.toml\\.jinja$/"]
   }

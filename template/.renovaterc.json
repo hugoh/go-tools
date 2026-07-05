@@ -1,4 +1,4 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>hugoh/go-tools"]
+  "extends": ["github>hugoh/go-tools:go-renovaterc"]
 }
