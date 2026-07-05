@@ -197,7 +197,6 @@ class TestMergePreservesBlankLines(unittest.TestCase):
             os.chdir(original_cwd)
 
         lines = result.splitlines(keepends=True)
-        new_tool_line = 'go:golang.org/x/vuln/cmd/govulncheck" = "1.1.4"\n'
         new_tool_idx = None
         for i, line in enumerate(lines):
             if "govulncheck" in line:

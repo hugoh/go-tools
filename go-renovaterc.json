@@ -36,9 +36,14 @@
       "enabled": false
     },
     {
+      // Renovate can't resolve Copier's gh: shorthand for git-tags
+      // tracked at https://github.com/renovatebot/renovate/issues/39938
       "matchManagers": ["copier"],
       "matchPackageNames": ["gh:hugoh/go-tools"],
-      "enabled": false
+      "packageName": "https://github.com/hugoh/go-tools.git",
+      "ignoreScripts": false,
+      "schedule": ["at any time"],
+      "automerge": true
     }
   ],
   "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths"]

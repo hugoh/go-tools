@@ -1,6 +1,0 @@
-hugoh/cellular-signal
-hugoh/jj-trim
-hugoh/hrd
-hugoh/tmhi-cli
-hugoh/tmhi-gateway
-hugoh/upd
