@@ -32,9 +32,9 @@ Each repo's `.github/workflows/template-update.yml` (itself part of the template
 - **Weekly cron** — every Monday at 06:00.
 - **`workflow_dispatch`** — manual trigger, e.g. to bootstrap a repo onto a new template-update workflow revision, or to force an immediate resync instead of waiting for cron.
 
-The four self-referential `hugoh/go-tools/...@<sha>` pins (`go-hk.yml`, `go-ci.yml`, `go-release.yml`, `go-template-update.yml`) are pinned by `copier update` itself, not Renovate — the Renovate preset (`default.json`) explicitly disables the `hugoh/go-tools` package for the `github-actions` manager. Copier's 3-way merge assumes it's the sole writer of anything it templates; letting Renovate _also_ bump these same lines made every `copier update` conflict with whatever Renovate had done in between (found the hard way — a `copier update` run failing with literal `<<<<<<<` conflict markers on that exact line, repeatedly, no matter how the underlying discrepancy was patched). Renovate still manages every other action pin fleet-wide as usual; this exclusion is scoped to `hugoh/go-tools` only.
+The four self-referential `hugoh/go-tools/...@<sha>` pins (`go-hk.yml`, `go-ci.yml`, `go-release.yml`, `go-template-update.yml`) are pinned by `copier update` itself, not Renovate — the Renovate preset (`go-renovaterc.json`) explicitly disables the `hugoh/go-tools` package for the `github-actions` manager. Copier's 3-way merge assumes it's the sole writer of anything it templates; letting Renovate _also_ bump these same lines made every `copier update` conflict with whatever Renovate had done in between (found the hard way — a `copier update` run failing with literal `<<<<<<<` conflict markers on that exact line, repeatedly, no matter how the underlying discrepancy was patched). Renovate still manages every other action pin fleet-wide as usual; this exclusion is scoped to `hugoh/go-tools` only.
 
-The same reasoning applies to `.copier-answers.yml`'s `_commit`, also owned exclusively by `copier update` — so `default.json` disables the `copier` manager for the `gh:hugoh/go-tools` package too. This also sidesteps a Renovate limitation: it doesn't expand Copier's own `gh:` shorthand into a real git URL before querying the `git-tags` datasource, so left enabled it just fails every run with `Failed to look up git-tags package gh:hugoh/go-tools: no-result`.
+The same reasoning applies to `.copier-answers.yml`'s `_commit`, also owned exclusively by `copier update` — so `go-renovaterc.json` disables the `copier` manager for the `gh:hugoh/go-tools` package too. This also sidesteps a Renovate limitation: it doesn't expand Copier's own `gh:` shorthand into a real git URL before querying the `git-tags` datasource, so left enabled it just fails every run with `Failed to look up git-tags package gh:hugoh/go-tools: no-result`.
 
 To do it by hand instead: `copier update` inside the repo (re-applies the template and 3-way-merges against local edits, recorded in `.copier-answers.yml`).
 
@@ -72,8 +72,8 @@ Add to a repo's `.renovaterc.json` to inherit all shared Renovate config (this i
 ```json
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>hugoh/go-tools"]
+  "extends": ["github>hugoh/go-tools:go-renovaterc"]
 }
 ```
 
-> **Note:** `default.json` in this repo root is the Renovate preset file. It is not package config.
+> **Note:** `go-renovaterc.json` in this repo root is the Renovate preset file. It is not package config.
