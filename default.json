@@ -34,6 +34,11 @@
       "matchManagers": ["github-actions"],
       "matchPackageNames": ["hugoh/go-tools"],
       "enabled": false
+    },
+    {
+      "matchManagers": ["copier"],
+      "matchPackageNames": ["gh:hugoh/go-tools"],
+      "enabled": false
     }
   ],
   "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths"]
