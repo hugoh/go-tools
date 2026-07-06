@@ -1,3 +1,9 @@
+# Forces this literal URL into every consumer's .copier-answers.yml `_src_path`,
+# regardless of how `copier copy`/`copier update` was actually invoked (e.g. the
+# `gh:hugoh/go-tools` shorthand). Renovate's copier manager can't resolve the
+# `gh:` shorthand to a repo, so without this pin it silently stops proposing
+# template updates. Remove once renovatebot/renovate#39938 is fixed.
+# Do not remove until then, even though it looks redundant.
 _min_copier_version: "9.0.0"
 _src_path: https://github.com/hugoh/go-tools.git
 _answers_file: .copier-answers.yml
