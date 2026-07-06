@@ -5,6 +5,11 @@
     {
       "matchManagers": ["github-actions"],
       "semanticCommitType": "fix"
+    },
+    {
+      "matchManagers": ["pep723", "pip_requirements"],
+      "matchPackageNames": ["tomlkit"],
+      "groupName": "tomlkit (merge-mise-tools + its tests)"
     }
   ],
   "mise": {

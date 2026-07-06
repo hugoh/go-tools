@@ -2,4 +2,4 @@
 #MISE description="Render the Copier template against fixtures and validate the output"
 set -euo pipefail
 cd "$(dirname "$0")/.."
-uv run --with pytest --with pytest-xdist pytest -n auto test/test_render_check.py "$@"
+uv run --with-requirements test/requirements-render-check.txt pytest -n auto test/test_render_check.py "$@"
