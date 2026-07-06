@@ -42,49 +42,67 @@ for pid in "${pids[@]}"; do
   wait "$pid" || fail=1
 done
 
-# Phase 2: validate each rendered output serially (hk/pkl cache, goreleaser)
+validate_one() {
+  local tmpdir=$1
+  local label
+  label=$(grep '^project_name:' "$tmpdir/.copier-answers.yml" 2>/dev/null | awk '{print $2}')
+  local summary="$tmpdir/validate-summary.log"
+
+  {
+    echo "--- validating: $label ---"
+
+    if ! shellcheck "$tmpdir"/mise-tasks/* >"$tmpdir/shellcheck.log" 2>&1; then
+      echo "FAIL ($label): shellcheck"
+      cat "$tmpdir/shellcheck.log"
+      exit 1
+    fi
+
+    if ! actionlint "$tmpdir"/.github/workflows/*.yml >"$tmpdir/actionlint.log" 2>&1; then
+      echo "FAIL ($label): actionlint"
+      cat "$tmpdir/actionlint.log"
+      exit 1
+    fi
+
+    if ! (cd "$tmpdir" && dprint check) >"$tmpdir/dprint.log" 2>&1; then
+      echo "FAIL ($label): dprint check"
+      cat "$tmpdir/dprint.log"
+      exit 1
+    fi
+
+    if ! (cd "$tmpdir" && hk validate) >"$tmpdir/hk.log" 2>&1; then
+      echo "FAIL ($label): hk validate (hk.pkl)"
+      cat "$tmpdir/hk.log"
+      exit 1
+    fi
+
+    if [[ -f "$tmpdir/.goreleaser.yml" ]]; then
+      if ! (cd "$tmpdir" && git init -q && git remote add origin "https://github.com/hugoh/$label.git" && TAP_GITHUB_TOKEN=x goreleaser check) >"$tmpdir/goreleaser.log" 2>&1; then
+        echo "FAIL ($label): goreleaser check"
+        cat "$tmpdir/goreleaser.log"
+        exit 1
+      fi
+    fi
+
+    echo "ok: $label"
+  } >"$summary" 2>&1
+}
+
+# Phase 2: validate each rendered output in parallel; each tmpdir is
+# self-contained (own dir, own git init) so runs don't interfere with each
+# other. Output is buffered per-label and printed in order after completion
+# so parallel logs don't interleave.
+pids=()
+tmpdirs=()
 for tmpdir in "$rootdir"/*/; do
   [[ -d "$tmpdir" ]] || continue
-  label=$(grep '^project_name:' "$tmpdir/.copier-answers.yml" 2>/dev/null | awk '{print $2}')
+  tmpdirs+=("$tmpdir")
+  validate_one "$tmpdir" &
+  pids+=($!)
+done
 
-  echo "--- validating: $label ---"
-
-  if ! shellcheck "$tmpdir"/mise-tasks/* >"$tmpdir/shellcheck.log" 2>&1; then
-    echo "FAIL ($label): shellcheck"
-    fail=1
-    continue
-  fi
-
-  if ! actionlint "$tmpdir"/.github/workflows/*.yml >"$tmpdir/actionlint.log" 2>&1; then
-    echo "FAIL ($label): actionlint"
-    fail=1
-    continue
-  fi
-
-  if ! (cd "$tmpdir" && dprint check) >"$tmpdir/dprint.log" 2>&1; then
-    echo "FAIL ($label): dprint check"
-    cat "$tmpdir/dprint.log"
-    fail=1
-    continue
-  fi
-
-  if ! (cd "$tmpdir" && hk validate) >"$tmpdir/hk.log" 2>&1; then
-    echo "FAIL ($label): hk validate (hk.pkl)"
-    cat "$tmpdir/hk.log"
-    fail=1
-    continue
-  fi
-
-  if [[ -f "$tmpdir/.goreleaser.yml" ]]; then
-    if ! (cd "$tmpdir" && git init -q && git remote add origin "https://github.com/hugoh/$label.git" && TAP_GITHUB_TOKEN=x goreleaser check) >"$tmpdir/goreleaser.log" 2>&1; then
-      echo "FAIL ($label): goreleaser check"
-      cat "$tmpdir/goreleaser.log"
-      fail=1
-      continue
-    fi
-  fi
-
-  echo "ok: $label"
+for i in "${!pids[@]}"; do
+  wait "${pids[$i]}" || fail=1
+  cat "${tmpdirs[$i]}/validate-summary.log"
 done
 
 rm -rf "$rootdir"
