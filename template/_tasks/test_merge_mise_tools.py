@@ -74,6 +74,15 @@ class TestParseTools(unittest.TestCase):
             },
         )
 
+    def test_inline_table_value_recognized(self):
+        self._write(
+            '[tools]\ngo = { version = "1.26.4", postinstall = "echo hi" }\n'
+            'ruff = "0.11.4"\n',
+        )
+        tools = parse_tools(self.path)
+        self.assertIn("go", tools)
+        self.assertEqual(tools["ruff"], "0.11.4")
+
 
 class TestMerge(unittest.TestCase):
     """End-to-end merge of missing tools into mise.toml."""
@@ -149,6 +158,46 @@ class TestMerge(unittest.TestCase):
 
         self.assertIn("[tools]", result)
         self.assertIn('ruff = "0.11.4"', result)
+
+    def test_merge_skips_inline_table_tool(self):
+        self._write(".mise-desired.toml", '[tools]\ngo = "1.26.4"\nruff = "0.11.4"\n')
+        self._write(
+            "mise.toml",
+            '[tools]\ngo = { version = "1.26.4", postinstall = "echo hi" }\n'
+            '\n[env]\nCOVEROUT = "cover.out"\n',
+        )
+        from merge_mise_tools import main
+
+        original_cwd = os.getcwd()
+        try:
+            os.chdir(self.tmpdir.name)
+            main()
+            result = self._read("mise.toml")
+        finally:
+            os.chdir(original_cwd)
+
+        # go's inline-table pin is left untouched, no duplicate "go" key added
+        self.assertIn('go = { version = "1.26.4", postinstall = "echo hi" }', result)
+        self.assertEqual(result.count("\ngo"), 1)
+        self.assertIn('ruff = "0.11.4"', result)
+
+    def test_merge_appends_when_tools_is_last_section_no_trailing_newline(self):
+        self._write(".mise-desired.toml", '[tools]\nruff = "0.11.4"\n')
+        self._write("mise.toml", '[tools]\ngo = "1.26.4"')
+        from merge_mise_tools import main
+
+        original_cwd = os.getcwd()
+        try:
+            os.chdir(self.tmpdir.name)
+            main()
+            result = self._read("mise.toml")
+        finally:
+            os.chdir(original_cwd)
+
+        self.assertIn('go = "1.26.4"\n', result)
+        self.assertIn('ruff = "0.11.4"\n', result)
+        # the two entries must land on separate lines, not concatenated
+        self.assertNotIn('"1.26.4"ruff', result)
 
 
 class TestMergePreservesBlankLines(unittest.TestCase):

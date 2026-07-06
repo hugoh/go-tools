@@ -12,12 +12,17 @@ import sys
 
 
 KEY_RE = re.compile(
-    r'^\s*(?:"(?P<quoted>[^"]+)"|(?P<bare>[^\s=]+))\s*=\s*"(?P<val>[^"]*)"\s*$',
+    r'^\s*(?:"(?P<quoted>[^"]+)"|(?P<bare>[^\s=]+))\s*=\s*(?P<val>.+?)\s*$',
 )
 
 
 def parse_tools(path):
-    """Return dict of tool_name -> version from [tools] section."""
+    """Return dict of tool_name -> version from [tools] section.
+
+    Entries whose value isn't a simple quoted string (e.g. mise's inline-table
+    form `go = { version = "1.26.4" }`) are still recorded, keyed by their raw
+    value text, so such tools are correctly treated as already present.
+    """
     tools = {}
     in_tools = False
     with open(path) as f:
@@ -30,7 +35,11 @@ def parse_tools(path):
                 continue
             m = KEY_RE.match(s)
             if m:
-                tools[m.group("quoted") or m.group("bare")] = m.group("val")
+                key = m.group("quoted") or m.group("bare")
+                val = m.group("val")
+                if len(val) >= 2 and val[0] == '"' and val[-1] == '"':
+                    val = val[1:-1]
+                tools[key] = val
     return tools
 
 
@@ -79,16 +88,20 @@ def main():
         insert = "[tools]\n"
     else:
         insert_pos = tools_end if tools_end is not None else len(lines)
-        if insert_pos != len(lines):
-            for i in range(insert_pos - 1, tools_start, -1):
-                if lines[i].strip():
-                    insert_pos = i + 1
-                    break
+        for i in range(insert_pos - 1, tools_start, -1):
+            if lines[i].strip():
+                insert_pos = i + 1
+                break
         insert = ""
 
     for key in sorted(missing):
         k = f'"{key}"' if ("/" in key or ":" in key or "." in key) else key
         insert += f'{k} = "{missing[key]}"\n'
+
+    # If we're appending after the file's last line and that line has no
+    # trailing newline, the new text would otherwise land on the same line.
+    if insert_pos == len(lines) and lines and not lines[-1].endswith("\n"):
+        lines[-1] += "\n"
 
     lines.insert(insert_pos, insert)
 
