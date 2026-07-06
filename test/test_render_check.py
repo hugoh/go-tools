@@ -13,6 +13,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
+import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -61,6 +62,15 @@ def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
     assert ok, f"copier render failed:\n{log}"
 
     failures = []
+
+    answers = yaml.safe_load(data_file.read_text()) if data_file is not None else {}
+    expect_dev = answers.get("has_executable", True)
+    dev_exists = (tmp_path / "mise-tasks" / "dev").exists()
+    if dev_exists != expect_dev:
+        failures.append(
+            f"mise-tasks/dev existence ({dev_exists}) doesn't match "
+            f"has_executable ({expect_dev})",
+        )
 
     # merge_mise_tools.py self-destructs after running (see copier.yml's
     # _tasks), leaving _tasks/ empty. Guards against dev-only files

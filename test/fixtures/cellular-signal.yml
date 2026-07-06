@@ -1,6 +1,5 @@
 project_name: cellular-signal
 has_goreleaser: false
-dev_watch: true
 has_test_int: true
 has_gen: false
 has_fuzz: true

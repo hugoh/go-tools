@@ -37,6 +37,10 @@ local linters = new Mapping<String, Step> {
     glob = List("test/test_merge_mise_tools.py", "template/_tasks/merge_mise_tools.py")
     check = "uv run --with-requirements test/requirements-merge-mise-tools.txt pytest test/test_merge_mise_tools.py"
   }
+  ["migrate-dev-watch-test"] = {
+    glob = List("test/test_migrate_dev_watch.py", "_migrations/migrate_dev_watch.py")
+    check = "uv run --with-requirements test/requirements-migrate-dev-watch.txt pytest test/test_migrate_dev_watch.py"
+  }
   ["render-check"] = {
     check = "mise run render-check"
   }

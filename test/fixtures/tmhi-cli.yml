@@ -2,7 +2,6 @@ project_name: tmhi-cli
 has_goreleaser: true
 project_description: "CLI for managing T-Mobile Home Internet gateway and signal monitoring"
 goreleaser_version_pkg: "main"
-dev_watch: false
 has_test_int: true
 has_gen: false
 has_fuzz: false

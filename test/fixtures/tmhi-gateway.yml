@@ -1,6 +1,6 @@
 project_name: tmhi-gateway
 has_goreleaser: false
-dev_watch: true
+has_executable: false
 has_test_int: true
 has_gen: false
 has_fuzz: false
