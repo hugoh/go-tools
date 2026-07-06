@@ -20,7 +20,7 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
       - name: Setup mise
-        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
+        uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d # v4.2.0
       - name: hk checks
         run: hk check --no-progress --profile ci --all --no-fail-fast
       - name: Display hk log on failure
