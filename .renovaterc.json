@@ -10,6 +10,11 @@
       "matchManagers": ["pep723", "pip_requirements"],
       "matchPackageNames": ["tomlkit"],
       "groupName": "tomlkit (merge-mise-tools + its tests)"
+    },
+    {
+      "matchManagers": ["pip_requirements"],
+      "matchPackageNames": ["pytest"],
+      "groupName": "pytest (test infra)"
     }
   ],
   "mise": {

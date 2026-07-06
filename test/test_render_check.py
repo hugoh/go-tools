@@ -62,6 +62,19 @@ def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
 
     failures = []
 
+    # merge_mise_tools.py self-destructs after running (see copier.yml's
+    # _tasks), leaving _tasks/ empty. Guards against dev-only files
+    # (test_merge_mise_tools.py, requirements-merge-mise-tools.txt) ever
+    # leaking back into a shipped render, or .mise-desired.toml surviving.
+    tasks_dir = tmp_path / "_tasks"
+    if tasks_dir.exists():
+        leftover = sorted(p.name for p in tasks_dir.iterdir())
+        if leftover:
+            failures.append(
+                "_tasks/ should be empty after merge_mise_tools.py "
+                f"self-destructs, found: {', '.join(leftover)}",
+            )
+
     def check(name, check_cmd, cwd=tmp_path, env=None):
         ok, log = run(check_cmd, cwd=cwd, env=env)
         if not ok:

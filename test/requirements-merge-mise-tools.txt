@@ -1,0 +1,4 @@
+# tomlkit's range must track template/_tasks/merge_mise_tools.py's own
+# PEP 723 header pin (grouped together via .renovaterc.json's packageRules).
+tomlkit>=0.12,<1
+pytest==9.1.1

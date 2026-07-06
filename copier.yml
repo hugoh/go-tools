@@ -17,8 +17,6 @@ _skip_if_exists:
   - mise.toml
 
 _exclude:
-  - _tasks/test_merge_mise_tools.py
-  - _tasks/requirements-test.txt
   - _tasks/__pycache__
   - _tools_list.toml
 
