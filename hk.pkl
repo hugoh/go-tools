@@ -41,7 +41,7 @@ local linters = new Mapping<String, Step> {
   }
   ["merge-mise-tools-test"] = {
     glob = List("template/_tasks/test_*.py")
-    check = "pytest template/_tasks/"
+    check = "uv run --with tomlkit --with pytest pytest template/_tasks/"
   }
   ["render-check"] = {
     check = "mise run render-check"
