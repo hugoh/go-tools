@@ -23,6 +23,12 @@ _exclude:
 
 _tasks:
   - "mise trust --yes"
+  # Fail loudly if copier's diff3 merge left `<<<<<<< before updating` /
+  # `>>>>>>> after updating` conflict markers in any file: without this,
+  # a broken render sails through as a normal-looking PR that only fails
+  # deep in CI, and then gets silently superseded by the next release's
+  # PR instead of actually fixed.
+  - "test ! -d .git || hk check -a -S conflicts"
   - "python3 _tasks/merge_mise_tools.py --self-destruct"
 
 project_name:
