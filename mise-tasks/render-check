@@ -10,7 +10,8 @@ import subprocess
 import sys
 import tempfile
 import threading
-from concurrent.futures import ThreadPoolExecutor
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -21,6 +22,11 @@ ROOT = Path(__file__).resolve().parent.parent
 # intermittent, differing pkl parse errors across parallel tmpdirs, even
 # with each tmpdir given its own HK_CACHE_DIR). Serialize just this step.
 HK_LOCK = threading.Lock()
+
+# Serializes stdout writes so a per-job summary line and its (optional)
+# full failure log print as one atomic block, never interleaved with
+# another thread's completion.
+PRINT_LOCK = threading.Lock()
 
 
 @dataclass
@@ -33,6 +39,16 @@ class Result:
 def run(cmd, cwd=None, env=None):
     proc = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True)
     return proc.returncode == 0, proc.stdout + proc.stderr
+
+
+def report(phase, index, total, label, ok, elapsed, log=""):
+    status = "ok" if ok else "FAIL"
+    with PRINT_LOCK:
+        print(
+            f"[{phase} {index}/{total}] {status}: {label} ({elapsed:.1f}s)", flush=True
+        )
+        if log:
+            print(log, flush=True)
 
 
 def render_one(label, data_file, tmpdir):
@@ -122,26 +138,63 @@ def main():
     render_jobs.append(("defaults", None, rootdir / "defaults"))
 
     # Phase 1: render all fixtures in parallel (copier is I/O bound)
-    with ThreadPoolExecutor() as pool:
-        render_results = list(pool.map(lambda job: render_one(*job), render_jobs))
-
+    total_render = len(render_jobs)
+    print(f"--- render: {total_render} fixtures ---", flush=True)
     tmpdirs = []
-    for result, (_, _, tmpdir) in zip(render_results, render_jobs):
-        if not result.ok:
-            fail = True
-            print(result.log)
-        else:
-            tmpdirs.append(tmpdir)
+    completed = 0
+    with ThreadPoolExecutor() as pool:
+        starts = {}
+        futures = {}
+        for job in render_jobs:
+            future = pool.submit(render_one, *job)
+            starts[future] = time.monotonic()
+            futures[future] = job
+        for future in as_completed(futures):
+            label, _, tmpdir = futures[future]
+            result = future.result()
+            elapsed = time.monotonic() - starts[future]
+            completed += 1
+            report(
+                "render",
+                completed,
+                total_render,
+                label,
+                result.ok,
+                elapsed,
+                result.log if not result.ok else "",
+            )
+            if not result.ok:
+                fail = True
+            else:
+                tmpdirs.append(tmpdir)
 
     # Phase 2: validate each rendered output in parallel; each tmpdir is
     # self-contained (own dir, own git init) so runs don't interfere.
+    total_validate = len(tmpdirs)
+    print(f"--- validate: {total_validate} renders ---", flush=True)
+    completed = 0
     with ThreadPoolExecutor() as pool:
-        validate_results = list(pool.map(validate_one, tmpdirs))
-
-    for result in validate_results:
-        print(result.log)
-        if not result.ok:
-            fail = True
+        starts = {}
+        futures = {}
+        for tmpdir in tmpdirs:
+            future = pool.submit(validate_one, tmpdir)
+            starts[future] = time.monotonic()
+            futures[future] = tmpdir
+        for future in as_completed(futures):
+            result = future.result()
+            elapsed = time.monotonic() - starts[future]
+            completed += 1
+            report(
+                "validate",
+                completed,
+                total_validate,
+                result.label,
+                result.ok,
+                elapsed,
+                result.log if not result.ok else "",
+            )
+            if not result.ok:
+                fail = True
 
     shutil.rmtree(rootdir)
     return 1 if fail else 0
