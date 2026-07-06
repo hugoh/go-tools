@@ -21,7 +21,7 @@ _exclude:
   - _tools_list.toml
 
 _tasks:
-  - "mise trust --yes"
+  - "mise trust --yes --silent"
   # Fail loudly if copier's diff3 merge left `<<<<<<< before updating` /
   # `>>>>>>> after updating` conflict markers in any file: without this,
   # a broken render sails through as a normal-looking PR that only fails
