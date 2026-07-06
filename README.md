@@ -16,7 +16,7 @@ Templates the config files every Go repo carries: `.golangci.yml`, `.testcoverag
 2. Run Copier via `uvx` (**not** `mise use pipx:copier`, which would create `mise.toml` itself before Copier gets a chance to seed it, tripping `_skip_if_exists` and leaving you with an empty tool list):
 
    ```sh
-   uvx copier copy gh:hugoh/go-tools .
+   uvx copier copy --trust https://github.com/hugoh/go-tools .
    ```
 
    Answer the prompts (`has_test_int`, `has_gen`, `coverage_total`, the `golangci_*` lists, etc). This generates every file above, including a starter `mise.toml` (which already pins `copier`, so it's mise-managed from here on), plus `.copier-answers.yml` to track the template going forward.

@@ -3,6 +3,7 @@
 import os
 
 import pytest
+import tomlkit
 
 from merge_mise_tools import main, parse_tools
 
@@ -67,6 +68,14 @@ def test_parse_tools_inline_table_value_recognized(tmp_path):
     tools = parse_tools(str(path))
     assert "go" in tools
     assert tools["ruff"] == "0.11.4"
+    assert tools["go"]["version"] == "1.26.4"
+
+
+def test_parse_tools_raises_on_invalid_toml(tmp_path):
+    path = tmp_path / "test.toml"
+    path.write_text('[tools]\ngo = "1.26.4\n')  # unterminated string
+    with pytest.raises(tomlkit.exceptions.TOMLKitError):
+        parse_tools(str(path))
 
 
 def _run_merge(tmp_path, monkeypatch, desired, target):
@@ -100,6 +109,14 @@ def test_merge_skips_existing_tools(tmp_path, monkeypatch):
     assert result.count("ruff") == 1
 
 
+def test_merge_no_op_when_nothing_missing(tmp_path, monkeypatch):
+    target = '[tools]\ngo = "1.26.4"\nruff = "0.9.0"\n'
+    result = _run_merge(tmp_path, monkeypatch, '[tools]\ngo = "1.26.4"\n', target)
+    # mise.toml left byte-for-byte untouched when there's nothing to add
+    assert result == target
+    assert ".mise-desired.toml" not in os.listdir(tmp_path)
+
+
 def test_merge_adds_tools_section_when_missing(tmp_path, monkeypatch):
     result = _run_merge(
         tmp_path,
@@ -109,6 +126,17 @@ def test_merge_adds_tools_section_when_missing(tmp_path, monkeypatch):
     )
     assert "[tools]" in result
     assert 'ruff = "0.11.4"' in result
+    # newly-created [tools] table is placed first, matching existing convention
+    assert result.index("[tools]") < result.index("[env]")
+
+
+def test_merge_creates_mise_toml_when_absent(tmp_path, monkeypatch):
+    (tmp_path / ".mise-desired.toml").write_text('[tools]\nruff = "0.11.4"\n')
+    monkeypatch.chdir(tmp_path)
+    main()
+    result = (tmp_path / "mise.toml").read_text()
+    assert dict(tomlkit.parse(result)["tools"]) == {"ruff": "0.11.4"}
+    assert ".mise-desired.toml" not in os.listdir(tmp_path)
 
 
 def test_merge_skips_inline_table_tool(tmp_path, monkeypatch):
@@ -134,10 +162,10 @@ def test_merge_appends_when_tools_is_last_section_no_trailing_newline(
         '[tools]\nruff = "0.11.4"\n',
         '[tools]\ngo = "1.26.4"',
     )
-    assert 'go = "1.26.4"\n' in result
-    assert 'ruff = "0.11.4"\n' in result
-    # the two entries must land on separate lines, not concatenated
-    assert '"1.26.4"ruff' not in result
+    assert dict(tomlkit.parse(result)["tools"]) == {
+        "go": "1.26.4",
+        "ruff": "0.11.4",
+    }
 
 
 def test_merge_preserves_blank_line_before_next_section(tmp_path, monkeypatch):
@@ -155,11 +183,56 @@ def test_merge_preserves_blank_line_before_next_section(tmp_path, monkeypatch):
         'COVEROUT = "cover.out"\n',
     )
 
-    lines = result.splitlines(keepends=True)
-    new_tool_idx = next(i for i, line in enumerate(lines) if "govulncheck" in line)
+    assert dict(tomlkit.parse(result)["tools"]) == {
+        "go": "1.26.4",
+        "jj": "0.42.0",
+        "npm:cpd": "5.0.11",
+        "go:golang.org/x/tools/cmd/deadcode": "0.46.0",
+        "go:golang.org/x/vuln/cmd/govulncheck": "1.1.4",
+    }
+    # new tool inserted right after last existing tool, before [env]
+    assert result.index("govulncheck") < result.index("[env]")
+    # blank line between the tools table and the next section preserved
+    assert "\n\n[env]" in result
 
-    # tool inserted right after last existing tool
-    assert '"go:golang.org/x/tools/cmd/deadcode"' in lines[new_tool_idx - 1]
-    # blank line between new tool and next section
-    assert lines[new_tool_idx + 1].strip() == ""
-    assert "[env]" in lines[new_tool_idx + 2]
+
+def test_merge_preserves_comment_in_tools_section(tmp_path, monkeypatch):
+    result = _run_merge(
+        tmp_path,
+        monkeypatch,
+        '[tools]\nruff = "0.11.4"\n',
+        '[tools]\n# pinned for compatibility with CI image\ngo = "1.26.4"\n',
+    )
+    assert "# pinned for compatibility with CI image" in result
+    assert 'ruff = "0.11.4"' in result
+
+
+def test_merge_ignores_unrelated_array_of_tables_section(tmp_path, monkeypatch):
+    target = (
+        '[tools]\ngo = "1.26.4"\n\n[[extra]]\nname = "a"\n\n[[extra]]\nname = "b"\n'
+    )
+    result = _run_merge(
+        tmp_path,
+        monkeypatch,
+        '[tools]\ngo = "1.26.4"\nruff = "0.11.4"\n',
+        target,
+    )
+    doc = tomlkit.parse(result)
+    assert dict(doc["tools"]) == {"go": "1.26.4", "ruff": "0.11.4"}
+    assert [dict(t) for t in doc["extra"]] == [{"name": "a"}, {"name": "b"}]
+
+
+def test_merge_raises_on_invalid_desired_toml(tmp_path, monkeypatch):
+    (tmp_path / ".mise-desired.toml").write_text('[tools]\ngo = "1.26.4\n')
+    (tmp_path / "mise.toml").write_text("[tools]\n")
+    monkeypatch.chdir(tmp_path)
+    with pytest.raises(tomlkit.exceptions.TOMLKitError):
+        main()
+
+
+def test_merge_raises_on_invalid_target_toml(tmp_path, monkeypatch):
+    (tmp_path / ".mise-desired.toml").write_text('[tools]\nruff = "0.11.4"\n')
+    (tmp_path / "mise.toml").write_text('[tools]\ngo = "1.26.4\n')
+    monkeypatch.chdir(tmp_path)
+    with pytest.raises(tomlkit.exceptions.TOMLKitError):
+        main()

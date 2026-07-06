@@ -1,3 +1,7 @@
+# /// script
+# requires-python = ">=3.11"
+# dependencies = ["tomlkit>=0.12,<1"]
+# ///
 """Merge missing tools from .mise-desired.toml into mise.toml.
 
 Called by copier _tasks after template update. Adds any tool from the
@@ -7,40 +11,35 @@ after merging.
 """
 
 import os
-import re
 import sys
 
-
-KEY_RE = re.compile(
-    r'^\s*(?:"(?P<quoted>[^"]+)"|(?P<bare>[^\s=]+))\s*=\s*(?P<val>.+?)\s*$',
-)
+import tomlkit
 
 
 def parse_tools(path):
-    """Return dict of tool_name -> version from [tools] section.
-
-    Entries whose value isn't a simple quoted string (e.g. mise's inline-table
-    form `go = { version = "1.26.4" }`) are still recorded, keyed by their raw
-    value text, so such tools are correctly treated as already present.
-    """
-    tools = {}
-    in_tools = False
+    """Return dict of tool_name -> value from the [tools] section."""
     with open(path) as f:
-        for line in f:
-            s = line.strip()
-            if s.startswith("[") and s.endswith("]"):
-                in_tools = s.lower() == "[tools]"
-                continue
-            if not in_tools or not s or s.startswith("#"):
-                continue
-            m = KEY_RE.match(s)
-            if m:
-                key = m.group("quoted") or m.group("bare")
-                val = m.group("val")
-                if len(val) >= 2 and val[0] == '"' and val[-1] == '"':
-                    val = val[1:-1]
-                tools[key] = val
-    return tools
+        doc = tomlkit.parse(f.read())
+    return dict(doc.get("tools", {}))
+
+
+def merge_missing(existing_doc, missing):
+    """Add missing tools into existing_doc's [tools] table, creating it at
+    the top of the document if it doesn't exist yet.
+
+    tomlkit has no public API to insert a new table at an explicit position,
+    so this uses Container._insert_at (private) to match the convention that
+    [tools] appears first in a freshly-created mise.toml.
+    """
+    if "tools" not in existing_doc:
+        new_table = tomlkit.table()
+        if len(existing_doc.body) == 0:
+            existing_doc.add("tools", new_table)
+        else:
+            existing_doc._insert_at(0, "tools", new_table)  # noqa: SLF001
+    tools_table = existing_doc["tools"]
+    for key in sorted(missing):
+        tools_table[key] = missing[key]
 
 
 def main():
@@ -51,62 +50,31 @@ def main():
     if not os.path.exists(desired_file):
         return
 
-    desired = parse_tools(desired_file)
+    with open(desired_file) as f:
+        desired_doc = tomlkit.parse(f.read())
+    desired = dict(desired_doc.get("tools", {}))
+
     if not desired:
         os.remove(desired_file)
         return
 
-    existing = parse_tools(target_file) if os.path.exists(target_file) else {}
+    if os.path.exists(target_file):
+        with open(target_file) as f:
+            existing_doc = tomlkit.parse(f.read())
+    else:
+        existing_doc = tomlkit.document()
+
+    existing = dict(existing_doc.get("tools", {}))
 
     missing = {k: v for k, v in desired.items() if k not in existing}
     if not missing:
         os.remove(desired_file)
         return
 
-    with open(target_file) as f:
-        content = f.read()
-
-    lines = content.splitlines(keepends=True)
-
-    tools_start = None
-    tools_end = None
-    for i, line in enumerate(lines):
-        s = line.strip()
-        if s.startswith("[") and s.endswith("]"):
-            if tools_start is not None:
-                tools_end = i
-                break
-            if s.lower() == "[tools]":
-                tools_start = i
-
-    if tools_start is None:
-        insert_pos = len(lines)
-        for i, line in enumerate(lines):
-            if line.strip().startswith("["):
-                insert_pos = i
-                break
-        insert = "[tools]\n"
-    else:
-        insert_pos = tools_end if tools_end is not None else len(lines)
-        for i in range(insert_pos - 1, tools_start, -1):
-            if lines[i].strip():
-                insert_pos = i + 1
-                break
-        insert = ""
-
-    for key in sorted(missing):
-        k = f'"{key}"' if ("/" in key or ":" in key or "." in key) else key
-        insert += f'{k} = "{missing[key]}"\n'
-
-    # If we're appending after the file's last line and that line has no
-    # trailing newline, the new text would otherwise land on the same line.
-    if insert_pos == len(lines) and lines and not lines[-1].endswith("\n"):
-        lines[-1] += "\n"
-
-    lines.insert(insert_pos, insert)
+    merge_missing(existing_doc, missing)
 
     with open(target_file, "w") as f:
-        f.writelines(lines)
+        f.write(tomlkit.dumps(existing_doc))
 
     os.remove(desired_file)
     print(

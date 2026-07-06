@@ -2,7 +2,6 @@ project_name: upd
 has_goreleaser: true
 project_description: "Tool to monitor if the network connection is up"
 goreleaser_version_pkg: "github.com/hugoh/upd/internal/version"
-dev_watch: false
 has_test_int: true
 test_int_cmd: "gotestsum -- -count=1 -race -tags=integration ./..."
 has_gen: false

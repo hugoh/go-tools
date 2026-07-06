@@ -5,7 +5,6 @@ goreleaser_version_pkg: "github.com/hugoh/hrd/cmd"
 has_homebrew_cask: true
 goreleaser_before_hooks: ["go run ./cmd/genman"]
 nfpm_extra_contents: [{ src: "man/*.1", dst: "/usr/share/man/man1" }]
-dev_watch: false
 has_test_int: false
 has_gen: true
 gen_sources: ["README.md.tpl", "cmd/**/*.go"]

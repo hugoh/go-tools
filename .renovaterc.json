@@ -5,9 +5,22 @@
     {
       "matchManagers": ["github-actions"],
       "semanticCommitType": "fix"
+    },
+    {
+      "matchManagers": ["pep723", "pip_requirements"],
+      "matchPackageNames": ["tomlkit"],
+      "groupName": "tomlkit (merge-mise-tools + its tests)"
+    },
+    {
+      "matchManagers": ["pip_requirements"],
+      "matchPackageNames": ["pytest"],
+      "groupName": "pytest (test infra)"
     }
   ],
   "mise": {
     "managerFilePatterns": ["/^template/_tools_list\\.toml\\.jinja$/"]
+  },
+  "pep723": {
+    "managerFilePatterns": ["/^template/_tasks/merge_mise_tools\\.py$/"]
   }
 }

@@ -17,13 +17,23 @@ _skip_if_exists:
   - mise.toml
 
 _exclude:
-  - _tasks/test_merge_mise_tools.py
   - _tasks/__pycache__
   - _tools_list.toml
 
+_migrations:
+  - version: v1.7.0
+    command: "python3 [[ _copier_conf.src_path ]]/_migrations/migrate_dev_watch.py"
+    when: "[[ _stage == 'before' ]]"
+
 _tasks:
-  - "mise trust --yes"
-  - "python3 _tasks/merge_mise_tools.py --self-destruct"
+  - "mise trust --yes --silent"
+  # Fail loudly if copier's diff3 merge left `<<<<<<< before updating` /
+  # `>>>>>>> after updating` conflict markers in any file: without this,
+  # a broken render sails through as a normal-looking PR that only fails
+  # deep in CI, and then gets silently superseded by the next release's
+  # PR instead of actually fixed.
+  - "test ! -d .git || hk check -a -S conflicts"
+  - "mise x uv@latest -- uv run --script _tasks/merge_mise_tools.py --self-destruct"
 
 project_name:
   type: str
@@ -64,10 +74,10 @@ nfpm_extra_contents:
   help: "Extra files to include in deb/rpm packages: list of {src, dst} objects"
   when: "[[ has_goreleaser ]]"
 
-dev_watch:
+has_executable:
   type: bool
-  default: false
-  help: "dev task runs 'gotestsum --watch ./...' instead of 'go run .'"
+  default: true
+  help: Project has a main package that produces an executable (adds the dev mise task)
 
 has_test_int:
   type: bool
