@@ -1,109 +1,151 @@
-#!/usr/bin/env bash
+#!/usr/bin/env python3
+# fmt: off
 #MISE description="Render the Copier template against fixtures and validate the output"
-set -euo pipefail
+# fmt: on
 
-root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
-fail=0
+import glob
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+import threading
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
+from pathlib import Path
 
-rootdir=$(mktemp -d)
+ROOT = Path(__file__).resolve().parent.parent
 
-sanitize() { echo "$1" | tr '/' '_'; }
+# hk validate evaluates hk.pkl via pkl, which reads/writes a shared package
+# cache (~/.pkl/cache) that isn't safe under concurrent access (observed:
+# intermittent, differing pkl parse errors across parallel tmpdirs, even
+# with each tmpdir given its own HK_CACHE_DIR). Serialize just this step.
+HK_LOCK = threading.Lock()
 
-render_one() {
-  local label=$1 data_file=$2
-  local safe
-  safe=$(sanitize "$label")
-  local tmpdir="$rootdir/$safe"
-  mkdir "$tmpdir"
 
-  local copier_args=(copy --trust --vcs-ref=HEAD --defaults -d project_name="$label")
-  if [[ -n "$data_file" ]]; then
-    copier_args+=(--data-file "$data_file")
-  fi
+@dataclass
+class Result:
+    label: str
+    ok: bool
+    log: str
 
-  if ! copier "${copier_args[@]}" "$root" "$tmpdir" >"$tmpdir/copier.log" 2>&1; then
-    echo "FAIL ($label): copier render failed"
-    cat "$tmpdir/copier.log"
-    return 1
-  fi
-}
 
-# Phase 1: render all fixtures in parallel (copier is I/O bound)
-pids=()
-for fixture in "$root"/test/fixtures/*.yml; do
-  label=$(basename "$fixture" .yml)
-  render_one "$label" "$fixture" &
-  pids+=($!)
-done
-render_one "defaults" "" &
-pids+=($!)
+def run(cmd, cwd=None, env=None):
+    proc = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True)
+    return proc.returncode == 0, proc.stdout + proc.stderr
 
-for pid in "${pids[@]}"; do
-  wait "$pid" || fail=1
-done
 
-validate_one() {
-  local tmpdir=$1
-  local label
-  label=$(grep '^project_name:' "$tmpdir/.copier-answers.yml" 2>/dev/null | awk '{print $2}')
-  local summary="$tmpdir/validate-summary.log"
+def render_one(label, data_file, tmpdir):
+    tmpdir.mkdir()
+    cmd = [
+        "copier",
+        "copy",
+        "--trust",
+        "--vcs-ref=HEAD",
+        "--defaults",
+        "-d",
+        f"project_name={label}",
+    ]
+    if data_file is not None:
+        cmd += ["--data-file", str(data_file)]
+    cmd += [str(ROOT), str(tmpdir)]
 
-  {
-    echo "--- validating: $label ---"
+    ok, log = run(cmd)
+    if not ok:
+        return Result(label, False, f"FAIL ({label}): copier render failed\n{log}")
+    return Result(label, True, "")
 
-    if ! shellcheck "$tmpdir"/mise-tasks/* >"$tmpdir/shellcheck.log" 2>&1; then
-      echo "FAIL ($label): shellcheck"
-      cat "$tmpdir/shellcheck.log"
-      exit 1
-    fi
 
-    if ! actionlint "$tmpdir"/.github/workflows/*.yml >"$tmpdir/actionlint.log" 2>&1; then
-      echo "FAIL ($label): actionlint"
-      cat "$tmpdir/actionlint.log"
-      exit 1
-    fi
+def validate_one(tmpdir):
+    answers = tmpdir / ".copier-answers.yml"
+    label = tmpdir.name
+    for line in answers.read_text().splitlines():
+        if line.startswith("project_name:"):
+            label = line.split(":", 1)[1].strip()
+            break
 
-    if ! (cd "$tmpdir" && dprint check) >"$tmpdir/dprint.log" 2>&1; then
-      echo "FAIL ($label): dprint check"
-      cat "$tmpdir/dprint.log"
-      exit 1
-    fi
+    lines = [f"--- validating: {label} ---"]
 
-    if ! (cd "$tmpdir" && hk validate) >"$tmpdir/hk.log" 2>&1; then
-      echo "FAIL ($label): hk validate (hk.pkl)"
-      cat "$tmpdir/hk.log"
-      exit 1
-    fi
+    def fail(stage, output):
+        lines.append(f"FAIL ({label}): {stage}")
+        lines.append(output)
+        return Result(label, False, "\n".join(lines))
 
-    if [[ -f "$tmpdir/.goreleaser.yml" ]]; then
-      if ! (cd "$tmpdir" && git init -q && git remote add origin "https://github.com/hugoh/$label.git" && TAP_GITHUB_TOKEN=x goreleaser check) >"$tmpdir/goreleaser.log" 2>&1; then
-        echo "FAIL ($label): goreleaser check"
-        cat "$tmpdir/goreleaser.log"
-        exit 1
-      fi
-    fi
+    shellcheck_targets = glob.glob(str(tmpdir / "mise-tasks" / "*"))
+    ok, log = run(["shellcheck", *shellcheck_targets])
+    if not ok:
+        return fail("shellcheck", log)
 
-    echo "ok: $label"
-  } >"$summary" 2>&1
-}
+    workflow_targets = glob.glob(str(tmpdir / ".github" / "workflows" / "*.yml"))
+    ok, log = run(["actionlint", *workflow_targets])
+    if not ok:
+        return fail("actionlint", log)
 
-# Phase 2: validate each rendered output in parallel; each tmpdir is
-# self-contained (own dir, own git init) so runs don't interfere with each
-# other. Output is buffered per-label and printed in order after completion
-# so parallel logs don't interleave.
-pids=()
-tmpdirs=()
-for tmpdir in "$rootdir"/*/; do
-  [[ -d "$tmpdir" ]] || continue
-  tmpdirs+=("$tmpdir")
-  validate_one "$tmpdir" &
-  pids+=($!)
-done
+    ok, log = run(["dprint", "check"], cwd=tmpdir)
+    if not ok:
+        return fail("dprint check", log)
 
-for i in "${!pids[@]}"; do
-  wait "${pids[$i]}" || fail=1
-  cat "${tmpdirs[$i]}/validate-summary.log"
-done
+    with HK_LOCK:
+        ok, log = run(["hk", "validate"], cwd=tmpdir)
+    if not ok:
+        return fail("hk validate (hk.pkl)", log)
 
-rm -rf "$rootdir"
-exit "$fail"
+    if (tmpdir / ".goreleaser.yml").exists():
+        ok, log = run(["git", "init", "-q"], cwd=tmpdir)
+        if ok:
+            ok, log = run(
+                [
+                    "git",
+                    "remote",
+                    "add",
+                    "origin",
+                    f"https://github.com/hugoh/{label}.git",
+                ],
+                cwd=tmpdir,
+            )
+        if ok:
+            env = {**os.environ, "TAP_GITHUB_TOKEN": "x"}
+            ok, log = run(["goreleaser", "check"], cwd=tmpdir, env=env)
+        if not ok:
+            return fail("goreleaser check", log)
+
+    lines.append(f"ok: {label}")
+    return Result(label, True, "\n".join(lines))
+
+
+def main():
+    rootdir = Path(tempfile.mkdtemp())
+    fail = False
+
+    fixtures = sorted((ROOT / "test" / "fixtures").glob("*.yml"))
+    render_jobs = [(f.stem, f, rootdir / f.stem) for f in fixtures]
+    render_jobs.append(("defaults", None, rootdir / "defaults"))
+
+    # Phase 1: render all fixtures in parallel (copier is I/O bound)
+    with ThreadPoolExecutor() as pool:
+        render_results = list(pool.map(lambda job: render_one(*job), render_jobs))
+
+    tmpdirs = []
+    for result, (_, _, tmpdir) in zip(render_results, render_jobs):
+        if not result.ok:
+            fail = True
+            print(result.log)
+        else:
+            tmpdirs.append(tmpdir)
+
+    # Phase 2: validate each rendered output in parallel; each tmpdir is
+    # self-contained (own dir, own git init) so runs don't interfere.
+    with ThreadPoolExecutor() as pool:
+        validate_results = list(pool.map(validate_one, tmpdirs))
+
+    for result in validate_results:
+        print(result.log)
+        if not result.ok:
+            fail = True
+
+    shutil.rmtree(rootdir)
+    return 1 if fail else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

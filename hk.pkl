@@ -27,15 +27,18 @@ local linters = new Mapping<String, Step> {
   ...Common.steps
   ["shellcheck-dev-tasks"] = {
     glob = List("mise-tasks/*")
-    check = "shellcheck {{ files }}"
+    exclude = List("mise-tasks/render-check")
   }
   ["shellharden-dev-tasks"] = {
     glob = List("mise-tasks/*")
-    check = "shellharden --check {{ files }}"
-    fix = "shellharden --replace {{ files }}"
+    exclude = List("mise-tasks/render-check")
   }
-  ["ruff"] = Builtins.ruff
-  ["ruff-format"] = Builtins.ruff_format
+  ["ruff"] = (Builtins.ruff) {
+    glob = List("**/*.py", "**/*.pyi", "mise-tasks/render-check")
+  }
+  ["ruff-format"] = (Builtins.ruff_format) {
+    glob = List("**/*.py", "**/*.pyi", "mise-tasks/render-check")
+  }
   ["merge-mise-tools-test"] = {
     glob = List("template/_tasks/test_*.py")
     check = "pytest template/_tasks/"
