@@ -38,8 +38,7 @@ local linters = new Mapping<String, Step> {
   ["ruff-format"] = Builtins.ruff_format
   ["merge-mise-tools-test"] = {
     glob = List("template/_tasks/test_*.py")
-    check = "python3 -m unittest discover -s template/_tasks/ -v"
-    profiles = List("!ci")
+    check = "pytest template/_tasks/"
   }
   ["render-check"] = {
     check = "mise run render-check"
