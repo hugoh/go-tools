@@ -1,6 +1,12 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["github>hugoh/go-tools:go-renovaterc"],
+  "packageRules": [
+    {
+      "matchManagers": ["github-actions"],
+      "semanticCommitType": "fix"
+    }
+  ],
   "mise": {
     "managerFilePatterns": ["/^template/_tools_list\\.toml\\.jinja$/"]
   }

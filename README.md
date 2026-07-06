@@ -20,13 +20,17 @@ Templates the config files every Go repo carries: `.golangci.yml`, `.testcoverag
    ```
 
    Answer the prompts (`has_test_int`, `has_gen`, `coverage_total`, the `golangci_*` lists, etc). This generates every file above, including a starter `mise.toml` (which already pins `copier`, so it's mise-managed from here on), plus `.copier-answers.yml` to track the template going forward.
-3. Push to GitHub, add the `CODECOV_TOKEN` secret if using Codecov, confirm Renovate is enabled (it'll pick up `.renovaterc.json` automatically). Renovate will also detect `.copier-answers.yml` and create template update PRs automatically going forward.
+3. Push to GitHub, add the `CODECOV_TOKEN` secret if using Codecov (and `TAP_GITHUB_TOKEN` if `has_homebrew_cask` is set — needed by `go-release.yml` to publish the Homebrew cask), confirm Renovate is enabled (it'll pick up `.renovaterc.json` automatically). Renovate will also detect `.copier-answers.yml` and create template update PRs automatically going forward.
 4. `mise install && hk install && mise run ci` locally to confirm everything's green before the first push.
-5. `mise run gh-repo-setup owner/repo` — one-time branch protection (PR required, `hk`/`goci`/`release` required checks, no direct pushes), auto-merge, and delete-branch-on-merge.
+5. `mise run gh-repo-setup owner/repo` — one-time branch protection (PR required, `hk`/`goci`/`release` required checks, no direct pushes), auto-merge, and delete-branch-on-merge. Requires `gh auth login` with a token that has repo admin access.
 
 ### Keeping a repo up to date
 
 Template updates are handled by **Renovate's built-in copier manager**. When a new version of `go-tools` is tagged, Renovate detects the outdated `_commit` in `.copier-answers.yml`, runs `copier update`, and opens a PR. Schedule: at any time.
+
+`copier.yml` pins `_src_path` to the full `https://github.com/hugoh/go-tools.git` URL, which gets force-written into every consumer's `.copier-answers.yml` regardless of how `copier copy`/`copier update` was actually invoked. This works around a Renovate limitation: its copier manager passes `_src_path` straight to git as a remote, so Copier's `gh:owner/repo` shorthand (which Copier itself expands internally, but records unexpanded in `.copier-answers.yml`) isn't resolvable and silently breaks update detection ([renovatebot/renovate#39938](https://github.com/renovatebot/renovate/issues/39938) tracks adding `gh:`/`gl:` support upstream). Because of this pin, bootstrapping with `gh:hugoh/go-tools` (as shown above) is safe — the recorded source is corrected regardless.
+
+Consumer repos' `mise.toml` is never overwritten by `copier update` (see `_skip_if_exists` above), but new tools added to the template's tool list _are_ still propagated: a post-update task (`_tasks/merge_mise_tools.py`, self-destructing after it runs) merges any tool missing from the existing `mise.toml` in from a generated `.mise-desired.toml`, then deletes that scratch file. Existing tool pins (including ones Renovate has since bumped) are left untouched — only missing keys are added.
 
 The three self-referential `hugoh/go-tools/...@<sha>` pins (`go-hk.yml`, `go-ci.yml`, `go-release.yml`) are managed exclusively by `copier update` — `go-renovaterc.json` disables Renovate's `github-actions` manager for `hugoh/go-tools` to prevent merge conflicts. Renovate manages every other action pin fleet-wide as usual.
 
