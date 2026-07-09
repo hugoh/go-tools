@@ -4,6 +4,7 @@ import os
 
 import pytest
 import tomlkit
+import tomlkit.exceptions
 
 from merge_mise_tools import main, parse_tools
 

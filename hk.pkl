@@ -33,6 +33,9 @@ local linters = new Mapping<String, Step> {
   }
   ["ruff"] = (Builtins.ruff)
   ["ruff-format"] = (Builtins.ruff_format)
+  ["ty"] = (Builtins.ty) {
+    check = "uv venv --quiet --clear .cache/ty-venv && uv pip install --quiet --python .cache/ty-venv -r test/requirements-merge-mise-tools.txt -r test/requirements-render-check.txt -r test/requirements-migrate-dev-watch.txt && uvx --with ty==0.0.57 ty check --python .cache/ty-venv --extra-search-path template/_tasks --extra-search-path _migrations {{files}}"
+  }
   ["merge-mise-tools-test"] = {
     glob = List("test/test_merge_mise_tools.py", "template/_tasks/merge_mise_tools.py")
     check = "uv run --with-requirements test/requirements-merge-mise-tools.txt pytest test/test_merge_mise_tools.py"
