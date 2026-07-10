@@ -52,6 +52,16 @@ Referenced automatically by the templated `.github/workflows/ci.yml` via `uses:`
 - `go-ci.yml` — runs `mise ci` (build, test, coverage) and uploads coverage to Codecov.
 - `go-release.yml` — cocogitto version bump + goreleaser release, triggered by a tag push (or dry-run validated on PRs).
 
+### Manually forcing a version bump in a consumer repo
+
+`cog bump --auto` (the default, run on every push to `main`) never crosses the `0.x → 1.x` boundary on its own — per SemVer, a breaking change in `0.x.y` bumps the _minor_, since anything can break pre-1.0 by definition. To force a specific bump through the normal, checked pipeline (`hk` → `goci` → `release`) instead of bypassing CI entirely, a repo built from this template (with `has_goreleaser: true`) can trigger its `ci.yml` manually with a `bump_type`:
+
+```sh
+gh workflow run ci.yml --ref main -f bump_type=major
+```
+
+(`bump_type` accepts `auto` (default), `patch`, `minor`, or `major`; also available via the Actions tab's "Run workflow" button.) The dispatch must target `main` — `go-release.yml` fails fast otherwise — and still runs `hk`/`goci` before releasing.
+
 ---
 
 ## Renovate preset
