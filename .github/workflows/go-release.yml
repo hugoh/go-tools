@@ -3,6 +3,11 @@ name: go-release
 
 on:
   workflow_call:
+    inputs:
+      bump_type:
+        type: string
+        default: "auto"
+        description: "Version bump type: auto, patch, minor, or major"
     secrets:
       gh_token:
         required: true
@@ -13,7 +18,9 @@ jobs:
   release:
     timeout-minutes: 30
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    if: >-
+      github.event_name == 'push' || github.event_name == 'pull_request' ||
+      github.event_name == 'workflow_dispatch'
     permissions:
       contents: write
     steps:
@@ -38,19 +45,26 @@ jobs:
             ${{ runner.os }}-go-${{ steps.go-version.outputs.go }}-
       - name: Setup mise
         uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d # v4.2.0
+      - name: Guard manual dispatch to main
+        if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'
+        env:
+          GITHUB_REF: ${{ github.ref }}
+        run: |
+          echo "::error::Manual bump_type dispatch must run on main (got ${GITHUB_REF})"
+          exit 1
       - name: Semver release
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         uses: cocogitto/cocogitto-action@52d0023b4396897f1815648e553db2ab8d782f3a # v4.2.0
         with:
           command: bump
-          args: --auto
+          args: ${{ inputs.bump_type == 'auto' && '--auto' || format('--{0}', inputs.bump_type) }}
       - name: Validate release
         id: validate
         env:
           GITHUB_TOKEN: ${{ secrets.gh_token }}
         run: |
           goreleaser check
-          if [ "${{ github.event_name }}" != "push" ]; then
+          if [ "${{ github.event_name }}" != "push" ] && [ "${{ github.event_name }}" != "workflow_dispatch" ]; then
             echo "--- Dry-run: version preview ---"
             cog bump --auto --dry-run --skip-untracked || echo "(no version bump needed)"
             echo ""
