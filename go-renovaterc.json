@@ -37,7 +37,9 @@
     },
     {
       "matchManagers": ["copier"],
+      "matchPackageNames": ["https://github.com/hugoh/go-tools.git"],
       "ignoreScripts": false,
+      "minimumReleaseAge": null,
       "schedule": ["at any time"],
       "automerge": true
     }
