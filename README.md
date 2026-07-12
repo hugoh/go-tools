@@ -34,6 +34,10 @@ Consumer repos' `mise.toml` is never overwritten by `copier update` (see `_skip_
 
 The three self-referential `hugoh/go-tools/...@<sha>` pins (`go-hk.yml`, `go-ci.yml`, `go-release.yml`) are managed exclusively by `copier update` — `go-renovaterc.json` disables Renovate's `github-actions` manager for `hugoh/go-tools` to prevent merge conflicts. Renovate manages every other action pin fleet-wide as usual.
 
+The `hk-config` Pkl package pin in `hk.pkl` follows the same rule: consumer repos' `hk.pkl` is a Copier output (unlike `mise.toml`, it's re-rendered on every `copier update`, never `_skip_if_exists`'d), so it must only change via that same template-update PR — never via a direct in-place edit that would then conflict with the next `copier update`'s merge. That's why `go-renovaterc.json` (the **shared** preset consumer repos extend) deliberately does **not** extend `hugoh/hk-config`'s own Renovate config, unlike every other hugoh repo. The pin only moves once `template/hk.pkl.jinja`'s own copy of it is bumped and a new `go-tools` release/commit lands, at which point the existing "always automerge template updates" `packageRule` above picks it up like any other template change.
+
+`go-tools`' own `.renovaterc.json` (this repo's config, distinct from the `go-renovaterc.json` preset it publishes) is the one exception that _does_ extend `hugoh/hk-config`'s Renovate config directly, plus two extra `customManagers` scoped to `template/hk.pkl.jinja` — because both `go-tools/hk.pkl` (hand-maintained repo tooling, not a Copier output) and the `.jinja` template source itself (nothing else keeps its embedded pin current) are this repo's own to manage, not something `copier update` touches.
+
 To update by hand: run `copier update` inside the repo.
 
 See `copier.yml` in this repo for the full list of variables (coverage thresholds, tool version pins, per-project golangci-lint deltas, etc).
