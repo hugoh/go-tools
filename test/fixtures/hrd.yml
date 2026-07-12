@@ -4,7 +4,7 @@ project_description: "Multi-repo manager for git and jj with parallel execution 
 goreleaser_version_pkg: "github.com/hugoh/hrd/cmd"
 has_homebrew_cask: true
 goreleaser_before_hooks: ["go run ./cmd/genman"]
-nfpm_extra_contents: [{ src: "man/*.1", dst: "/usr/share/man/man1" }]
+nfpm_extra_contents: [{src: "man/*.1", dst: "/usr/share/man/man1"}]
 has_test_int: false
 has_gen: true
 gen_sources: ["README.md.tpl", "cmd/**/*.go"]
@@ -24,7 +24,7 @@ golangci_test_exclude_linters: [err113, noctx, varnamelen, goconst, gosec]
 golangci_revive_overrides: true
 golangci_extra_exclusions: []
 coverage_total: 90
-testcoverage_overrides: [{ path: "backends/", threshold: 100 }]
+testcoverage_overrides: [{path: "backends/", threshold: 100}]
 testcoverage_excludes: [
   "main\\.go$ # Program entry point",
   "cmd/genreadme/",

@@ -1,6 +1,36 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>hugoh/go-tools:go-renovaterc"],
+  "extends": [
+    "github>hugoh/go-tools:go-renovaterc",
+    "github>hugoh/hk-config//renovate.json"
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Bump the hugoh/hk-config Pkl package pin in the Copier template's hk.pkl.jinja (not caught by hk-config's own .pkl-only customManager)",
+      "managerFilePatterns": ["/^template/hk\\.pkl\\.jinja$/"],
+      "matchStrings": [
+        "package://github\\.com/hugoh/hk-config/releases/download/v[^/]+/hk-config@(?<currentValue>[^#]+)#"
+      ],
+      "datasourceTemplate": "github-tags",
+      "packageNameTemplate": "hugoh/hk-config",
+      "extractVersionTemplate": "^v(?<version>.*)$",
+      "versioningTemplate": "semver",
+      "autoReplaceStringTemplate": "package://github.com/hugoh/hk-config/releases/download/v{{{newValue}}}/hk-config@{{{newValue}}}#"
+    },
+    {
+      "customType": "regex",
+      "description": "Bump the jdx/hk pin in the Copier template's hk.pkl.jinja (not caught by hk-config's own .pkl-only customManager)",
+      "managerFilePatterns": ["/^template/hk\\.pkl\\.jinja$/"],
+      "matchStrings": [
+        "package://github\\.com/jdx/hk/releases/download/v[^/]+/hk@(?<currentValue>[^#]+)#"
+      ],
+      "datasourceTemplate": "github-releases",
+      "packageNameTemplate": "jdx/hk",
+      "extractVersionTemplate": "^v?(?<version>.*)$",
+      "versioningTemplate": "semver"
+    }
+  ],
   "packageRules": [
     {
       "matchManagers": ["github-actions"],

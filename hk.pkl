@@ -1,38 +1,21 @@
 amends "package://github.com/jdx/hk/releases/download/v1.50.0/hk@1.50.0#/Config.pkl"
 import "package://github.com/jdx/hk/releases/download/v1.50.0/hk@1.50.0#/Builtins.pkl"
+import "package://github.com/hugoh/hk-config/releases/download/v0.3.0/hk-config@0.3.0#/base.pkl" as Base
 
-local Common = new Group {
-  steps {
-    ["actionlint"] = Builtins.actionlint
-    ["pinact"] = Builtins.pinact
-    ["conflicts"] = Builtins.check_merge_conflict
-    ["trailing-ws"] = Builtins.trailing_whitespace
-    ["line-endings"] = Builtins.mixed_line_ending
-    ["newlines"] = Builtins.newlines
-    ["case-conflict"] = Builtins.check_case_conflict
-    ["large-files"] = Builtins.check_added_large_files
-    ["executables"] = Builtins.check_executables_have_shebangs
-    ["symlinks"] = Builtins.check_symlinks
-    ["gitleaks"] = Builtins.gitleaks
-    ["ghalint"] = Builtins.ghalint_workflow
-    ["markdown"] = Builtins.rumdl
-    ["dprint"] = Builtins.dprint
-    ["zizmor"] = Builtins.zizmor
-    ["typos"] = Builtins.typos
-    ["mise"] = Builtins.mise
-  }
-}
+min_hk_version = Base.min_hk_version
 
 local linters = new Mapping<String, Step> {
-  ...Common.steps
-  ["shellcheck-dev-tasks"] = {
+  ...Base.base
+  ["shellcheck-dev-tasks"] = (Builtins.shellcheck) {
     glob = List("mise-tasks/*")
   }
-  ["shellharden-dev-tasks"] = {
+  ["shellharden-dev-tasks"] = (Builtins.shellharden) {
     glob = List("mise-tasks/*")
   }
-  ["ruff"] = (Builtins.ruff)
-  ["ruff-format"] = (Builtins.ruff_format)
+  ["shfmt-dev-tasks"] = (Builtins.shfmt) {
+    glob = List("mise-tasks/*")
+  }
+  ...Base.python
   ["ty"] = (Builtins.ty) {
     check = "uv venv --quiet --clear .cache/ty-venv && uv pip install --quiet --python .cache/ty-venv -r test/requirements-merge-mise-tools.txt -r test/requirements-render-check.txt -r test/requirements-migrate-dev-watch.txt && uvx --with ty==0.0.57 ty check --python .cache/ty-venv --extra-search-path template/_tasks --extra-search-path _migrations {{files}}"
   }
