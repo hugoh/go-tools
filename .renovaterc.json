@@ -1,9 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "github>hugoh/go-tools:go-renovaterc",
-    "github>hugoh/hk-config//renovate.json"
-  ],
+  "extends": ["github>hugoh/go-tools:go-renovaterc"],
   "customManagers": [
     {
       "customType": "regex",
@@ -48,7 +45,15 @@
     }
   ],
   "mise": {
-    "managerFilePatterns": ["/^template/_tools_list\\.toml\\.jinja$/"]
+    "managerFilePatterns": [
+      "**/{,.}mise{,.*}.toml",
+      "**/{,.}mise/config{,.*}.toml",
+      "**/.config/mise{,.*}.toml",
+      "**/.config/mise/{mise,config}{,.*}.toml",
+      "**/.config/mise/conf.d/*.toml",
+      "**/.rtx{,.*}.toml",
+      "/^template/_tools_list\\.toml\\.jinja$/"
+    ]
   },
   "pep723": {
     "managerFilePatterns": ["/^template/_tasks/merge_mise_tools\\.py$/"]

@@ -4,6 +4,7 @@
     "config:recommended",
     "customManagers:githubActionsVersions",
     "github>kachick/renovate-config-dprint#1.3.0",
+    "github>hugoh/hk-config//renovate.json",
     ":automergeLinters",
     ":automergeMinor",
     ":automergeDigest",
