@@ -33,7 +33,7 @@ _tasks:
   # deep in CI, and then gets silently superseded by the next release's
   # PR instead of actually fixed.
   - "test ! -d .git || hk check -a -S conflicts"
-  - "mise x uv@latest -- uv run --script _tasks/merge_mise_tools.py --self-destruct"
+  - "mise x uv -- uv run --script _tasks/merge_mise_tools.py --self-destruct"
 
 project_name:
   type: str
