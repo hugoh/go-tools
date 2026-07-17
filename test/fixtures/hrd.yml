@@ -31,6 +31,3 @@ testcoverage_excludes: [
   "internal/backend/backendtest/ # shared test helpers, exercised only from other packages' tests",
 ]
 cog_omit_types: []
-hk_has_golangci_step: false
-hk_has_goreleaser_step: true
-hk_prepush_with_go_ci: true

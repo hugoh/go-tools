@@ -13,7 +13,4 @@ coverage_total: 80
 testcoverage_overrides: []
 testcoverage_excludes: ["main\\.go$"]
 cog_omit_types: []
-hk_has_golangci_step: true
-hk_has_goreleaser_step: false
-hk_prepush_with_go_ci: false
 test_int_cmd: "test ! -d internal || gotestsum -- -count=1 -race -tags=integration ./internal/..."

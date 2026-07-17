@@ -142,18 +142,3 @@ cog_omit_types:
   type: json
   default: []
   help: "Commit types to omit from changelog in cog.toml (e.g. doc, lint): list of strings"
-
-hk_has_golangci_step:
-  type: bool
-  default: true
-  help: hk.pkl runs golangci-lint as its own step (profile !ci)
-
-hk_has_goreleaser_step:
-  type: bool
-  default: false
-  help: hk.pkl runs 'goreleaser check' as its own step
-
-hk_prepush_with_go_ci:
-  type: bool
-  default: false
-  help: hk.pkl pre-push hook also runs 'mise ci'
