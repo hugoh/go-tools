@@ -21,7 +21,6 @@ golangci_extra_disable: [
   varnamelen,
 ]
 golangci_test_exclude_linters: [err113, noctx, varnamelen, goconst, gosec]
-golangci_revive_overrides: true
 golangci_extra_exclusions: []
 coverage_total: 90
 testcoverage_overrides: [{path: "backends/", threshold: 100}]

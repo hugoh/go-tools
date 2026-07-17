@@ -8,7 +8,6 @@ has_gen: false
 has_fuzz: false
 golangci_extra_disable: [depguard, exhaustruct, godoclint, testpackage]
 golangci_test_exclude_linters: [err113, noctx, varnamelen]
-golangci_revive_overrides: false
 golangci_extra_exclusions: []
 coverage_total: 80
 testcoverage_overrides: []
