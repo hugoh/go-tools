@@ -31,16 +31,6 @@ testcoverage_excludes: [
   "internal/backend/backendtest/ # shared test helpers, exercised only from other packages' tests",
 ]
 cog_omit_types: []
-codecov_style: full
-codecov_ignore: ["main.go", "cmd/genreadme/**"]
-codecov_target: "80%"
-codecov_components:
-  - id: backends_git
-    name: backends/git
-    path: "backends/git/**"
-  - id: backends_jj
-    name: backends/jj
-    path: "backends/jj/**"
 hk_has_golangci_step: false
 hk_has_goreleaser_step: true
 hk_prepush_with_go_ci: true

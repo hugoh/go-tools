@@ -12,8 +12,6 @@ coverage_total: 90
 testcoverage_overrides: []
 testcoverage_excludes: []
 cog_omit_types: ["doc"]
-codecov_style: simple
-codecov_ignore: ["main.go"]
 hk_has_golangci_step: true
 hk_has_goreleaser_step: false
 hk_prepush_with_go_ci: false

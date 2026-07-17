@@ -143,28 +143,6 @@ cog_omit_types:
   default: []
   help: "Commit types to omit from changelog in cog.toml (e.g. doc, lint): list of strings"
 
-codecov_style:
-  type: str
-  default: simple
-  choices: [simple, full]
-  help: "simple = just an ignore list; full = coverage target + component_management"
-
-codecov_ignore:
-  type: json
-  default: ["main.go"]
-  help: codecov ignore paths
-
-codecov_target:
-  type: str
-  default: "80%"
-  when: "[[ codecov_style == 'full' ]]"
-
-codecov_components:
-  type: json
-  default: []
-  help: "List of {id, name, path} component definitions"
-  when: "[[ codecov_style == 'full' ]]"
-
 hk_has_golangci_step:
   type: bool
   default: true

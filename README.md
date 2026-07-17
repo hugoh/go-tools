@@ -6,7 +6,7 @@ Shared tooling for [hugoh](https://github.com/hugoh)'s Go project repositories (
 
 ## Copier template
 
-Templates the config files every Go repo carries: `.golangci.yml`, `.testcoverage.yml`, `cog.toml`, `codecov.yml`, `dprint.json`, `hk.pkl`, `.jscpd.json`, `.markdownlint.json`, `.renovaterc.json`, `.github/workflows/ci.yml`, and the `mise-tasks/` directory (mise [file tasks](https://mise.jdx.dev/tasks/#file-tasks): lint, test, build, ci, etc).
+Templates the config files every Go repo carries: `.golangci.yml`, `.testcoverage.yml`, `cog.toml`, `dprint.json`, `hk.pkl`, `.jscpd.json`, `.markdownlint.json`, `.renovaterc.json`, `.github/workflows/ci.yml`, and the `mise-tasks/` directory (mise [file tasks](https://mise.jdx.dev/tasks/#file-tasks): lint, test, build, ci, etc).
 
 `mise.toml` is templated too, and — like `hk.pkl` — is re-rendered on every `copier update`; it's not `_skip_if_exists`'d. `go-renovaterc.json` disables Renovate's `mise` manager for `mise.toml` in consumer repos so the two don't race to bump the same tool versions (see `hk.pkl`'s note below for the same pattern). mise automatically merges the `mise-tasks/` scripts in as tasks regardless of what's in `mise.toml`.
 
