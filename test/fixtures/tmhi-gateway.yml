@@ -6,15 +6,9 @@ has_gen: false
 has_fuzz: false
 golangci_extra_disable: [depguard, exhaustruct, testpackage]
 golangci_test_exclude_linters: [err113, funlen, varnamelen]
-golangci_revive_overrides: false
 golangci_extra_exclusions: []
 coverage_total: 90
 testcoverage_overrides: []
 testcoverage_excludes: []
 cog_omit_types: ["doc"]
-codecov_style: simple
-codecov_ignore: ["main.go"]
-hk_has_golangci_step: true
-hk_has_goreleaser_step: false
-hk_prepush_with_go_ci: false
 test_int_cmd: "test ! -d internal || gotestsum -- -count=1 -race -tags=integration ./internal/..."

@@ -30,13 +30,22 @@
   ],
   "packageRules": [
     {
+      "description": "These 3 reusable workflows are uses:-pinned by commit hash via copier update in every consumer repo — a bump here only reaches consumers once go-tools cuts a new tag, so force fix (not chore) to make cocogitto's `cog bump --auto` release it. go-tools' own ci.yml is excluded: it's never consumed externally, so its own action bumps don't need a release.",
       "matchManagers": ["github-actions"],
+      "matchFileNames": ["go-hk.yml", "go-ci.yml", "go-release.yml"],
       "semanticCommitType": "fix"
     },
     {
-      "matchManagers": ["pep723", "pip_requirements"],
-      "matchPackageNames": ["tomlkit"],
-      "groupName": "tomlkit (merge-mise-tools + its tests)"
+      "description": "Same reasoning as above: template/mise.toml.jinja's tool pins only reach consumers via a new go-tools tag.",
+      "matchManagers": ["mise"],
+      "matchFileNames": ["template/mise.toml.jinja"],
+      "semanticCommitType": "fix"
+    },
+    {
+      "description": "Same reasoning as above: template/hk.pkl.jinja's hk-config/jdx-hk pins only reach consumers via a new go-tools tag.",
+      "matchManagers": ["custom.regex"],
+      "matchFileNames": ["template/hk.pkl.jinja"],
+      "semanticCommitType": "fix"
     },
     {
       "matchManagers": ["pip_requirements"],
@@ -52,10 +61,7 @@
       "**/.config/mise/{mise,config}{,.*}.toml",
       "**/.config/mise/conf.d/*.toml",
       "**/.rtx{,.*}.toml",
-      "/^template/_tools_list\\.toml\\.jinja$/"
+      "/^template/mise\\.toml\\.jinja$/"
     ]
-  },
-  "pep723": {
-    "managerFilePatterns": ["/^template/_tasks/merge_mise_tools\\.py$/"]
   }
 }

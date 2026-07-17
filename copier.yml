@@ -13,27 +13,6 @@ _envops:
   block_end_string: "%]"
   variable_start_string: "[["
   variable_end_string: "]]"
-_skip_if_exists:
-  - mise.toml
-
-_exclude:
-  - _tasks/__pycache__
-  - _tools_list.toml
-
-_migrations:
-  - version: v1.7.0
-    command: "python3 [[ _copier_conf.src_path ]]/_migrations/migrate_dev_watch.py"
-    when: "[[ _stage == 'before' ]]"
-
-_tasks:
-  - "mise trust --yes --silent"
-  # Fail loudly if copier's diff3 merge left `<<<<<<< before updating` /
-  # `>>>>>>> after updating` conflict markers in any file: without this,
-  # a broken render sails through as a normal-looking PR that only fails
-  # deep in CI, and then gets silently superseded by the next release's
-  # PR instead of actually fixed.
-  - "test ! -d .git || hk check -a -S conflicts"
-  - "mise x uv -- uv run --script _tasks/merge_mise_tools.py --self-destruct"
 
 project_name:
   type: str
@@ -81,12 +60,12 @@ has_executable:
 
 has_test_int:
   type: bool
-  default: true
+  default: false
   help: Project has an integration-test mise task
 
 test_int_cmd:
   type: str
-  default: "test ! -d internal || gotestsum -- -count=1 -race -tags=integration ./internal/..."
+  default: "gotestsum -- -count=1 -race -tags=integration ./internal/..."
   help: Shell command for the test-int mise task
   when: "[[ has_test_int ]]"
 
@@ -163,40 +142,3 @@ cog_omit_types:
   type: json
   default: []
   help: "Commit types to omit from changelog in cog.toml (e.g. doc, lint): list of strings"
-
-codecov_style:
-  type: str
-  default: simple
-  choices: [simple, full]
-  help: "simple = just an ignore list; full = coverage target + component_management"
-
-codecov_ignore:
-  type: json
-  default: ["main.go"]
-  help: codecov ignore paths
-
-codecov_target:
-  type: str
-  default: "80%"
-  when: "[[ codecov_style == 'full' ]]"
-
-codecov_components:
-  type: json
-  default: []
-  help: "List of {id, name, path} component definitions"
-  when: "[[ codecov_style == 'full' ]]"
-
-hk_has_golangci_step:
-  type: bool
-  default: true
-  help: hk.pkl runs golangci-lint as its own step (profile !ci)
-
-hk_has_goreleaser_step:
-  type: bool
-  default: false
-  help: hk.pkl runs 'goreleaser check' as its own step
-
-hk_prepush_with_go_ci:
-  type: bool
-  default: false
-  help: hk.pkl pre-push hook also runs 'mise ci'

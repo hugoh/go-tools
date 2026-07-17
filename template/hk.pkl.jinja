@@ -36,11 +36,9 @@ local linters = new Mapping<String, Step> {
   ["golangci-lint-config"] = {
     check = "golangci-lint config verify"
   }
-[%- if hk_has_golangci_step %]
   ["golangci-lint"] = (Builtins.golangci_lint) {
     profiles = List("!ci")
   }
-[%- endif %]
   ["gomod-tidy"] = (Builtins.gomod_tidy) {
     profiles = List("!ci")
   }
@@ -54,7 +52,7 @@ local linters = new Mapping<String, Step> {
   ["duplication"] = {
     check = "cpd"
   }
-[%- if hk_has_goreleaser_step %]
+[%- if has_goreleaser %]
   ["goreleaser"]= {
     check = "goreleaser check"
   }
@@ -66,20 +64,9 @@ hooks {
     stash = "git"
     steps = linters
   }
-[%- if hk_prepush_with_go_ci %]
-  ["pre-push"] {
-    steps = new Mapping<String, Step> {
-      ... linters
-      ["go-ci"] {
-        check = "mise ci"
-      }
-    }
-  }
-[%- else %]
   ["pre-push"] {
     steps = linters
   }
-[%- endif %]
   ["fix"] {
     fix = true
     steps = linters

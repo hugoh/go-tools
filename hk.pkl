@@ -6,29 +6,26 @@ min_hk_version = Base.min_hk_version
 
 local linters = new Mapping<String, Step> {
   ...Base.base
+  // Deliberately scoped to just mise-tasks/* glob, not the builtins'
+  // default match_any (which now also matches any shebang-detected shell
+  // script by type, e.g. template/mise-tasks/* — the copier template's own
+  // scripts, checked separately via render-check, not here).
   ["shellcheck-dev-tasks"] = (Builtins.shellcheck) {
-    glob = List("mise-tasks/*")
+    match_any = List((FileSelector) { glob = List("mise-tasks/*") })
   }
   ["shellharden-dev-tasks"] = (Builtins.shellharden) {
     glob = List("mise-tasks/*")
   }
   ["shfmt-dev-tasks"] = (Builtins.shfmt) {
-    glob = List("mise-tasks/*")
+    match_any = List((FileSelector) { glob = List("mise-tasks/*") })
   }
   ...Base.python
   ["ty"] = (Builtins.ty) {
-    check = "uv venv --quiet --clear .cache/ty-venv && uv pip install --quiet --python .cache/ty-venv -r test/requirements-merge-mise-tools.txt -r test/requirements-render-check.txt -r test/requirements-migrate-dev-watch.txt && uvx --with ty==0.0.57 ty check --python .cache/ty-venv --extra-search-path template/_tasks --extra-search-path _migrations {{files}}"
-  }
-  ["merge-mise-tools-test"] = {
-    glob = List("test/test_merge_mise_tools.py", "template/_tasks/merge_mise_tools.py")
-    check = "uv run --with-requirements test/requirements-merge-mise-tools.txt pytest test/test_merge_mise_tools.py"
-  }
-  ["migrate-dev-watch-test"] = {
-    glob = List("test/test_migrate_dev_watch.py", "_migrations/migrate_dev_watch.py")
-    check = "uv run --with-requirements test/requirements-migrate-dev-watch.txt pytest test/test_migrate_dev_watch.py"
+    check = "uv venv --quiet --clear .cache/ty-venv && uv pip install --quiet --python .cache/ty-venv -r test/requirements-render-check.txt && uvx --with ty==0.0.57 ty check --python .cache/ty-venv {{files}}"
   }
   ["render-check"] = {
     check = "mise run render-check"
+    profiles = List("ci")
   }
   ["renovate-config-validator"] = {
     glob = List(".renovaterc.json", "go-renovaterc.json")
