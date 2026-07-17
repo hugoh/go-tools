@@ -13,27 +13,6 @@ _envops:
   block_end_string: "%]"
   variable_start_string: "[["
   variable_end_string: "]]"
-_skip_if_exists:
-  - mise.toml
-
-_exclude:
-  - _tasks/__pycache__
-  - _tools_list.toml
-
-_migrations:
-  - version: v1.7.0
-    command: "python3 [[ _copier_conf.src_path ]]/_migrations/migrate_dev_watch.py"
-    when: "[[ _stage == 'before' ]]"
-
-_tasks:
-  - "mise trust --yes --silent"
-  # Fail loudly if copier's diff3 merge left `<<<<<<< before updating` /
-  # `>>>>>>> after updating` conflict markers in any file: without this,
-  # a broken render sails through as a normal-looking PR that only fails
-  # deep in CI, and then gets silently superseded by the next release's
-  # PR instead of actually fixed.
-  - "test ! -d .git || hk check -a -S conflicts"
-  - "mise x uv -- uv run --script _tasks/merge_mise_tools.py --self-destruct"
 
 project_name:
   type: str

@@ -34,11 +34,6 @@
       "semanticCommitType": "fix"
     },
     {
-      "matchManagers": ["pep723", "pip_requirements"],
-      "matchPackageNames": ["tomlkit"],
-      "groupName": "tomlkit (merge-mise-tools + its tests)"
-    },
-    {
       "matchManagers": ["pip_requirements"],
       "matchPackageNames": ["pytest"],
       "groupName": "pytest (test infra)"
@@ -52,10 +47,7 @@
       "**/.config/mise/{mise,config}{,.*}.toml",
       "**/.config/mise/conf.d/*.toml",
       "**/.rtx{,.*}.toml",
-      "/^template/_tools_list\\.toml\\.jinja$/"
+      "/^template/mise\\.toml\\.jinja$/"
     ]
-  },
-  "pep723": {
-    "managerFilePatterns": ["/^template/_tasks/merge_mise_tools\\.py$/"]
   }
 }
