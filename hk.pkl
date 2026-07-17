@@ -6,14 +6,18 @@ min_hk_version = Base.min_hk_version
 
 local linters = new Mapping<String, Step> {
   ...Base.base
+  // Deliberately scoped to just mise-tasks/* glob, not the builtins'
+  // default match_any (which now also matches any shebang-detected shell
+  // script by type, e.g. template/mise-tasks/* — the copier template's own
+  // scripts, checked separately via render-check, not here).
   ["shellcheck-dev-tasks"] = (Builtins.shellcheck) {
-    glob = List("mise-tasks/*")
+    match_any = List((FileSelector) { glob = List("mise-tasks/*") })
   }
   ["shellharden-dev-tasks"] = (Builtins.shellharden) {
     glob = List("mise-tasks/*")
   }
   ["shfmt-dev-tasks"] = (Builtins.shfmt) {
-    glob = List("mise-tasks/*")
+    match_any = List((FileSelector) { glob = List("mise-tasks/*") })
   }
   ...Base.python
   ["ty"] = (Builtins.ty) {
