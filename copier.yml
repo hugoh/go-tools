@@ -60,12 +60,12 @@ has_executable:
 
 has_test_int:
   type: bool
-  default: true
+  default: false
   help: Project has an integration-test mise task
 
 test_int_cmd:
   type: str
-  default: "test ! -d internal || gotestsum -- -count=1 -race -tags=integration ./internal/..."
+  default: "gotestsum -- -count=1 -race -tags=integration ./internal/..."
   help: Shell command for the test-int mise task
   when: "[[ has_test_int ]]"
 
