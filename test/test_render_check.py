@@ -82,6 +82,10 @@ def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
         ["shellcheck", *glob.glob(str(tmp_path / "mise-tasks" / "*"))],
     )
     check(
+        "shellharden",
+        ["shellharden", "--check", *glob.glob(str(tmp_path / "mise-tasks" / "*"))],
+    )
+    check(
         "actionlint",
         ["actionlint", *glob.glob(str(tmp_path / ".github" / "workflows" / "*.yml"))],
     )
