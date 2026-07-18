@@ -42,6 +42,12 @@
       "minimumReleaseAge": null,
       "schedule": ["at any time"],
       "automerge": true
+    },
+    {
+      "description": "mise.ci.toml is NOT Copier-managed (only repos that commit it directly, e.g. for CI-only tools like jj) — let Renovate bump it normally.",
+      "matchManagers": ["mise"],
+      "matchFileNames": ["mise.ci.toml"],
+      "enabled": true
     }
   ],
   "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths"]
