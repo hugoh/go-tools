@@ -2,7 +2,9 @@
 #MISE description="Check for dead code"
 #MISE sources=["**/*.go"]
 #USAGE flag "--test" help="Include test files"
-if deadcode ${usage_test:+-test} ./... 2>&1 | grep .; then
+flags=()
+[ "${usage_test:-}" != "" ] && flags+=(-test)
+if deadcode "${flags[@]}" ./... 2>&1 | grep .; then
   echo 'dead code found'
   exit 1
 fi
