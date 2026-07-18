@@ -3,4 +3,7 @@
 #MISE sources=["**/*.go", "**/*.json", "**/*.md", "**/*.toml", "**/*.yaml", "**/*.yml"]
 set -e
 golangci-lint fmt ./...
-dprint fmt . --excludes README.md
+rumdl check --fix --exclude README.md .
+tombi format .
+ryl --fix .
+biome check --write --no-errors-on-unmatched .

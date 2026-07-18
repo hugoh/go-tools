@@ -85,7 +85,12 @@ def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
         "actionlint",
         ["actionlint", *glob.glob(str(tmp_path / ".github" / "workflows" / "*.yml"))],
     )
-    check("dprint check", ["dprint", "check"])
+    check("rumdl check", ["rumdl", "check", "--exclude", "README.md", "."])
+    check("tombi format check", ["tombi", "format", "--check", "."])
+    # ryl is deliberately not checked here: it requires a rules config
+    # (.yamllint/ryl.toml) to do anything, and that file is hand-maintained
+    # per consumer repo, not part of this Copier template's own output.
+    check("biome check", ["biome", "check", "--no-errors-on-unmatched", "."])
 
     lock_path = tmp_path_factory.getbasetemp().parent / "hk-validate.lock"
     with file_lock(lock_path):
