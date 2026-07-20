@@ -28,8 +28,6 @@ jobs:
     uses: hugoh/go-tools/.github/workflows/go-ci.yml@[[ _copier_conf.vcs_ref_hash ]]
     permissions:
       contents: read
-    secrets:
-      codecov_token: ${{ secrets.CODECOV_TOKEN }}
 
 [%- if has_goreleaser %]
 

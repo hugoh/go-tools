@@ -22,7 +22,7 @@ A repo that needs a tool only in CI (not in the shared template, and not for loc
    ```
 
    Answer the prompts (`has_test_int`, `has_gen`, `coverage_total`, the `golangci_*` lists, etc). This generates every file above, including a starter `mise.toml` (which already pins `copier`, so it's mise-managed from here on), plus `.copier-answers.yml` to track the template going forward.
-3. Push to GitHub, add the `CODECOV_TOKEN` secret if using Codecov (and `TAP_GITHUB_TOKEN` if `has_homebrew_cask` is set — needed by `go-release.yml` to publish the Homebrew cask), confirm Renovate is enabled (it'll pick up `.renovaterc.json` automatically). Renovate will also detect `.copier-answers.yml` and create template update PRs automatically going forward.
+3. Push to GitHub, add the `TAP_GITHUB_TOKEN` if `has_homebrew_cask` is set — needed by `go-release.yml` to publish the Homebrew cask, confirm Renovate is enabled (it'll pick up `.renovaterc.json` automatically). Renovate will also detect `.copier-answers.yml` and create template update PRs automatically going forward.
 4. `mise install && hk install && mise run ci` locally to confirm everything's green before the first push.
 5. `mise run gh-repo-setup owner/repo` — one-time branch protection (PR required, `hk`/`goci`/`release` required checks, no direct pushes), auto-merge, and delete-branch-on-merge. Requires `gh auth login` with a token that has repo admin access.
 
@@ -53,7 +53,7 @@ See `copier.yml` in this repo for the full list of variables (coverage threshold
 Referenced automatically by the templated `.github/workflows/ci.yml` via `uses:`. Not meant to be used directly, but documented here for completeness:
 
 - `go-hk.yml` — runs `hk check` (lint/format/security checks via mise+hk).
-- `go-ci.yml` — runs `mise ci` (build, test, coverage) and uploads coverage to Codecov.
+- `go-ci.yml` — runs `mise ci` (build, test, coverage).
 - `go-release.yml` — cocogitto version bump + goreleaser release, triggered by a tag push (or dry-run validated on PRs).
 
 ### Manually forcing a version bump in a consumer repo
