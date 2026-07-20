@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+#MISE description="Build the static site for GitHub Pages"
+#MISE outputs=[[ [pages_dir] | tojson ]]
+set -e
+[%- for cmd in pages_gen_cmd %]
+[[ cmd ]]
+[%- endfor %]

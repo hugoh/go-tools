@@ -29,6 +29,20 @@ jobs:
     permissions:
       contents: read
 
+[%- if has_pages %]
+
+  pages:
+    needs: [hk, goci]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    uses: hugoh/go-tools/.github/workflows/go-pages.yml@[[ _copier_conf.vcs_ref_hash ]]
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    with:
+      pages_dir: "[[ pages_dir ]]"
+[%- endif %]
+
 [%- if has_goreleaser %]
 
   release:
