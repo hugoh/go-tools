@@ -98,6 +98,23 @@ gen_check_cmd:
   help: Shell command that fails if generated output is stale
   when: "[[ has_gen ]]"
 
+has_pages:
+  type: bool
+  default: false
+  help: Deploys a static site to GitHub Pages on push to main (adds go-pages job + mise pages-build task)
+
+pages_gen_cmd:
+  type: json
+  default: []
+  help: "Shell commands to run to build the site: list of strings"
+  when: "[[ has_pages ]]"
+
+pages_dir:
+  type: str
+  default: "site"
+  help: Directory containing the built site to publish to GitHub Pages
+  when: "[[ has_pages ]]"
+
 has_fuzz:
   type: bool
   default: false

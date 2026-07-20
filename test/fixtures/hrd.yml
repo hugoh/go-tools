@@ -11,6 +11,9 @@ gen_sources: ["README.md.tpl", "cmd/**/*.go"]
 gen_outputs: ["README.md"]
 gen_cmd: ["go generate ./...", "dprint fmt README.md"]
 gen_check_cmd: "git diff --exit-code README.md"
+has_pages: true
+pages_gen_cmd: ["go run ./cmd/genweb"]
+pages_dir: "site"
 has_fuzz: false
 golangci_extra_disable: [
   depguard,
