@@ -2,10 +2,7 @@
 name: go-ci
 
 on:
-  workflow_call:
-    secrets:
-      codecov_token:
-        required: false
+  workflow_call: {}
 
 jobs:
   goci:
@@ -43,7 +40,3 @@ jobs:
         run: mise ci
         env:
           MISE_TASK_TIMINGS: true
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
-        with:
-          token: ${{ secrets.codecov_token }}
