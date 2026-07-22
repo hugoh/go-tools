@@ -154,8 +154,3 @@ testcoverage_excludes:
   type: json
   default: []
   help: List of exclude path patterns for .testcoverage.yml
-
-cog_omit_types:
-  type: json
-  default: []
-  help: "Commit types to omit from changelog in cog.toml (e.g. doc, lint): list of strings"
