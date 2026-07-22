@@ -18,7 +18,7 @@ hk = "1.52.0"
 goreleaser = "2.17.0"
 ruff = "0.15.22"
 ty = "0.0.60"
-"npm:renovate" = "43.265.2"
+"npm:renovate" = "latest"
 cocogitto = "7.0.0"
 
 [settings]
