@@ -10,5 +10,4 @@ golangci_extra_exclusions: []
 coverage_total: 90
 testcoverage_overrides: []
 testcoverage_excludes: []
-cog_omit_types: ["doc"]
 test_int_cmd: "test ! -d internal || gotestsum -- -count=1 -race -tags=integration ./internal/..."

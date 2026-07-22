@@ -10,26 +10,29 @@ local linters = new Mapping<String, Step> {
   // default match_any (which now also matches any shebang-detected shell
   // script by type, e.g. template/mise-tasks/* — the copier template's own
   // scripts, checked separately via render-check, not here).
-  ["shellcheck-dev-tasks"] = (Builtins.shellcheck) {
+  ["shellcheck_dev_tasks"] = (Builtins.shellcheck) {
     match_any = List((FileSelector) { glob = List("mise-tasks/*") })
   }
-  ["shellharden-dev-tasks"] = (Builtins.shellharden) {
+  ["shellharden_dev_tasks"] = (Builtins.shellharden) {
     glob = List("mise-tasks/*")
   }
-  ["shfmt-dev-tasks"] = (Builtins.shfmt) {
+  ["shfmt_dev_tasks"] = (Builtins.shfmt) {
     match_any = List((FileSelector) { glob = List("mise-tasks/*") })
   }
   ...Base.python
   ["ty"] = (Builtins.ty) {
     check = "uv venv --quiet --clear .cache/ty-venv && uv pip install --quiet --python .cache/ty-venv -r test/requirements-render-check.txt && uvx --with ty==0.0.57 ty check --python .cache/ty-venv {{files}}"
   }
-  ["render-check"] = {
+  ["render_check"] = {
     check = "mise run render-check"
     profiles = List("ci")
   }
-  ["renovate-config-validator"] = {
+  ["renovate_config_validator"] = {
     glob = List(".renovaterc.json", "go-renovaterc.json")
     check = "renovate-config-validator --strict --no-global {{files}}"
+  }
+  ["conventional_commit"] {
+    check = "cog check --from-latest-tag"
   }
 }
 
@@ -44,5 +47,10 @@ hooks {
   }
   ["check"] {
     steps = linters
+  }
+  ["commit-msg"] {
+    steps = new Mapping<String, Step> {
+      ["cocogitto_commit_msg"] = Builtins.cocogitto_commit_msg
+    }
   }
 }

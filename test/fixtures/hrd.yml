@@ -32,4 +32,3 @@ testcoverage_excludes: [
   "cmd/genreadme/",
   "internal/backend/backendtest/ # shared test helpers, exercised only from other packages' tests",
 ]
-cog_omit_types: []

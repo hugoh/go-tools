@@ -12,4 +12,3 @@ golangci_extra_exclusions: []
 coverage_total: 80
 testcoverage_overrides: []
 testcoverage_excludes: []
-cog_omit_types: ["lint"]
