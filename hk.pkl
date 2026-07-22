@@ -31,6 +31,9 @@ local linters = new Mapping<String, Step> {
     glob = List(".renovaterc.json", "go-renovaterc.json")
     check = "renovate-config-validator --strict --no-global {{files}}"
   }
+  ["conventional-commit"] {
+    check = "cog check --from-latest-tag"
+  }
 }
 
 hooks {
@@ -44,5 +47,10 @@ hooks {
   }
   ["check"] {
     steps = linters
+  }
+  ["commit-msg"] {
+    steps = new Mapping<String, Step> {
+      ["cocogitto_commit_msg"] = Builtins.cocogitto_commit_msg
+    }
   }
 }
