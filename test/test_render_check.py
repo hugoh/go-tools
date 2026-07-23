@@ -101,6 +101,23 @@ def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
     # (.yamllint/ryl.toml) to do anything, and that file is hand-maintained
     # per consumer repo, not part of this Copier template's own output.
     check("biome check", ["biome", "check", "--no-errors-on-unmatched", "."])
+    check(
+        "mise install",
+        ["mise", "install"],
+        env={
+            **os.environ,
+            "MISE_TRUSTED_CONFIG_PATHS": str(tmp_path),
+            "MISE_YES": "1",
+            # Fresh CI runners (no user mise config) default the npm backend
+            # to aube, which enforces stricter checks than npm/bun -
+            # notably rejecting packages that drop provenance attestation
+            # after a prior version had it. Force it here so render-check
+            # matches what consumer repos' CI actually hits, rather than
+            # whatever backend happens to be configured on the machine
+            # running this test.
+            "MISE_NPM_PACKAGE_MANAGER": "aube",
+        },
+    )
 
     lock_path = tmp_path_factory.getbasetemp().parent / "hk-validate.lock"
     with file_lock(lock_path):
