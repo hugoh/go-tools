@@ -78,6 +78,11 @@ def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
         if not ok:
             failures.append(f"{name} failed:\n{log}")
 
+    try:
+        tomllib.loads((tmp_path / "mise.toml").read_text())
+    except tomllib.TOMLDecodeError as e:
+        failures.append(f"generated mise.toml is not valid TOML:\n{e}")
+
     check(
         "shellcheck",
         ["shellcheck", *glob.glob(str(tmp_path / "mise-tasks" / "*"))],
