@@ -7,12 +7,16 @@ hk's `render-check` step and CI's `hk` job.
 
 import fcntl
 import glob
+import hashlib
+import json
 import os
 import subprocess
 import tomllib
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from pathlib import Path
 
+import copier
 import pytest
 import yaml
 
@@ -20,6 +24,12 @@ ROOT = Path(__file__).resolve().parent.parent
 
 FIXTURES = sorted((ROOT / "test" / "fixtures").glob("*.yml"))
 CASES = [(f.stem, f) for f in FIXTURES] + [("defaults", None)]
+
+# copier.run_copy(vcs_ref="HEAD") warns whenever ROOT's git working tree has
+# uncommitted changes, which is routinely true while iterating locally (and
+# harmless: it's just describing how it already resolves "HEAD" against a
+# dirty tree, not a problem with the render).
+pytestmark = pytest.mark.filterwarnings("ignore::copier.errors.DirtyLocalWarning")
 
 
 @contextmanager
@@ -46,25 +56,25 @@ def run(cmd, cwd=None, env=None):
 
 @pytest.mark.parametrize("label,data_file", CASES, ids=[c[0] for c in CASES])
 def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
-    cmd = [
-        "copier",
-        "copy",
-        "--trust",
-        "--vcs-ref=HEAD",
-        "--defaults",
-        "-d",
-        f"project_name={label}",
-    ]
-    if data_file is not None:
-        cmd += ["--data-file", str(data_file)]
-    cmd += [str(ROOT), str(tmp_path)]
-
-    ok, log = run(cmd)
-    assert ok, f"copier render failed:\n{log}"
+    # Calling copier's own Python API in-process instead of shelling out to
+    # the `copier` CLI avoids paying a fresh Python-interpreter startup cost
+    # per case (6x here, more with more fixtures).
+    answers = yaml.safe_load(data_file.read_text()) if data_file is not None else {}
+    try:
+        copier.run_copy(
+            str(ROOT),
+            str(tmp_path),
+            data={**answers, "project_name": label},
+            vcs_ref="HEAD",
+            defaults=True,
+            unsafe=True,
+            quiet=True,
+        )
+    except Exception as e:  # noqa: BLE001 - report any render failure as a test failure
+        pytest.fail(f"copier render failed:\n{e}", pytrace=False)
 
     failures = []
 
-    answers = yaml.safe_load(data_file.read_text()) if data_file is not None else {}
     expect_dev = answers.get("has_executable", True)
     dev_exists = (tmp_path / "mise-tasks" / "dev").exists()
     if dev_exists != expect_dev:
@@ -73,38 +83,119 @@ def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
             f"has_executable ({expect_dev})",
         )
 
-    def check(name, check_cmd, cwd=tmp_path, env=None):
-        ok, log = run(check_cmd, cwd=cwd, env=env)
-        if not ok:
-            failures.append(f"{name} failed:\n{log}")
-
     try:
         tomllib.loads((tmp_path / "mise.toml").read_text())
     except tomllib.TOMLDecodeError as e:
         failures.append(f"generated mise.toml is not valid TOML:\n{e}")
 
-    check(
-        "shellcheck",
-        ["shellcheck", *glob.glob(str(tmp_path / "mise-tasks" / "*"))],
-    )
-    check(
-        "shellharden",
-        ["shellharden", "--check", *glob.glob(str(tmp_path / "mise-tasks" / "*"))],
-    )
-    check(
-        "actionlint",
-        ["actionlint", *glob.glob(str(tmp_path / ".github" / "workflows" / "*.yml"))],
-    )
-    check("rumdl check", ["rumdl", "check", "--exclude", "README.md", "."])
-    check("tombi format check", ["tombi", "format", "--check", "."])
-    # ryl is deliberately not checked here: it requires a rules config
-    # (.yamllint/ryl.toml) to do anything, and that file is hand-maintained
-    # per consumer repo, not part of this Copier template's own output.
-    check("biome check", ["biome", "check", "--no-errors-on-unmatched", "."])
+    cache_dir = tmp_path_factory.getbasetemp().parent
+    hk_lock_path = cache_dir / "hk-validate.lock"
 
-    lock_path = tmp_path_factory.getbasetemp().parent / "hk-validate.lock"
-    with file_lock(lock_path):
-        check("hk validate", ["hk", "validate"])
+    def cached_check(check_name, inputs, fn):
+        """Run fn() once per unique content of `inputs`, sharing the result
+        with any other case (in any xdist worker) whose inputs hash the same.
+
+        Only worth it for checks scoped to specific files/globs, where
+        several cases plausibly render byte-identical content (e.g. most
+        mise-tasks/* scripts and mise.toml's [tools] table aren't
+        project_name-parameterized). Checks that scan the whole rendered
+        tree ('.') aren't wrapped in this - they almost always differ by
+        project_name/description alone, so hashing the full tree would just
+        add cost without ever hitting the cache.
+        """
+        hasher = hashlib.sha256()
+        for p in sorted(Path(p) for p in inputs):
+            hasher.update(str(p.relative_to(tmp_path)).encode())
+            hasher.update(p.read_bytes())
+        key = f"{check_name}-{hasher.hexdigest()[:16]}"
+        result_path = cache_dir / f"{key}.json"
+        lock_path = cache_dir / f"{key}.lock"
+        with file_lock(lock_path):
+            if result_path.exists():
+                cached = json.loads(result_path.read_text())
+                return cached["ok"], cached["log"]
+            ok, log = fn()
+            result_path.write_text(json.dumps({"ok": ok, "log": log}))
+            return ok, log
+
+    mise_tasks_files = glob.glob(str(tmp_path / "mise-tasks" / "*"))
+    workflow_files = glob.glob(str(tmp_path / ".github" / "workflows" / "*.yml"))
+
+    def hk_validate():
+        def run_locked():
+            # hk's `validate` reads/writes a shared pkl package cache
+            # (~/.pkl/cache) that isn't safe under concurrent access
+            # (observed: intermittent, differing pkl parse errors across
+            # parallel tmpdirs, even with each tmpdir given its own
+            # HK_CACHE_DIR) - serialize against other xdist worker
+            # processes via file_lock. It can still run concurrently with
+            # this case's other, unrelated checks.
+            with file_lock(hk_lock_path):
+                return run(["hk", "validate"], cwd=tmp_path)
+
+        return cached_check("hk-validate", [tmp_path / "hk.pkl"], run_locked)
+
+    def mise_install():
+        def do_install():
+            return run(
+                ["mise", "install"],
+                cwd=tmp_path,
+                env={
+                    **os.environ,
+                    "MISE_TRUSTED_CONFIG_PATHS": str(tmp_path),
+                    "MISE_YES": "1",
+                    # Fresh CI runners (no user mise config) default the npm
+                    # backend to aube, which enforces stricter checks than
+                    # npm/bun - notably rejecting packages that drop
+                    # provenance attestation after a prior version had it.
+                    # Force it here so render-check matches what consumer
+                    # repos' CI actually hits, rather than whatever backend
+                    # happens to be configured on the machine running this
+                    # test.
+                    "MISE_NPM_PACKAGE_MANAGER": "aube",
+                },
+            )
+
+        # Only has_goreleaser varies the rendered [tools] table across
+        # cases - every other tool pin is unconditional - so most cases
+        # share byte-identical mise.toml content.
+        return cached_check("mise-install", [tmp_path / "mise.toml"], do_install)
+
+    checks = {
+        "shellcheck": lambda: cached_check(
+            "shellcheck",
+            mise_tasks_files,
+            lambda: run(["shellcheck", *mise_tasks_files]),
+        ),
+        "shellharden": lambda: cached_check(
+            "shellharden",
+            mise_tasks_files,
+            lambda: run(["shellharden", "--check", *mise_tasks_files]),
+        ),
+        "actionlint": lambda: cached_check(
+            "actionlint",
+            workflow_files,
+            lambda: run(["actionlint", *workflow_files]),
+        ),
+        "rumdl check": lambda: run(
+            ["rumdl", "check", "--exclude", "README.md", "."],
+            cwd=tmp_path,
+        ),
+        "tombi format check": lambda: run(
+            ["tombi", "format", "--check", "."],
+            cwd=tmp_path,
+        ),
+        # ryl is deliberately not checked here: it requires a rules config
+        # (.yamllint/ryl.toml) to do anything, and that file is
+        # hand-maintained per consumer repo, not part of this Copier
+        # template's own output.
+        "biome check": lambda: run(
+            ["biome", "check", "--no-errors-on-unmatched", "."],
+            cwd=tmp_path,
+        ),
+        "mise install": mise_install,
+        "hk validate": hk_validate,
+    }
 
     if (tmp_path / ".goreleaser.yml").exists():
         run(["git", "init", "-q"], cwd=tmp_path)
@@ -112,11 +203,29 @@ def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
             ["git", "remote", "add", "origin", f"https://github.com/hugoh/{label}.git"],
             cwd=tmp_path,
         )
-        check(
-            "goreleaser check",
+        checks["goreleaser check"] = lambda: run(
             ["goreleaser", "check"],
+            cwd=tmp_path,
             env={**os.environ, "TAP_GITHUB_TOKEN": "x"},
         )
+
+    # These checks are independent of each other (aside from hk_validate's
+    # own cross-process locking above), so run them concurrently rather than
+    # one at a time - subprocess.run releases the GIL while blocked, so
+    # threads are enough here without an asyncio rewrite. Sized as this
+    # worker's fair share of the machine's CPUs: pytest-xdist is running
+    # PYTEST_XDIST_WORKER_COUNT copies of this same pool concurrently for
+    # other cases, so dividing avoids the combined thread count oversubscribing
+    # the machine. Never exceeds len(checks), since more threads than tasks
+    # buys nothing.
+    xdist_workers = int(os.environ.get("PYTEST_XDIST_WORKER_COUNT", 1))
+    max_workers = max(1, min(len(checks), (os.cpu_count() or 4) // xdist_workers))
+    with ThreadPoolExecutor(max_workers=max_workers) as pool:
+        results = dict(zip(checks, pool.map(lambda fn: fn(), checks.values())))
+
+    for name, (ok, log) in results.items():
+        if not ok:
+            failures.append(f"{name} failed:\n{log}")
 
     if failures:
         pytest.fail("\n\n".join(failures), pytrace=False)
