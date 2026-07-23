@@ -9,6 +9,7 @@ import fcntl
 import glob
 import os
 import subprocess
+import tomllib
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -114,3 +115,30 @@ def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
 
     if failures:
         pytest.fail("\n\n".join(failures), pytrace=False)
+
+
+def test_mise_toml_jinja_is_raw_toml():
+    """template/mise.toml.jinja must parse as TOML in its raw, unrendered form.
+
+    Renovate's `mise` manager reads this file as literal TOML *before* any
+    Jinja rendering happens, to keep tool pins (hk, etc.) current. A Jinja
+    block tag written on its own line (e.g. an `[%- if %]`) is indistinguishable
+    from a TOML table header to that parser, which silently drops every pin in
+    the file from Renovate's view — not just the one inside the conditional.
+    This regression is invisible to the render-check above, since it only
+    ever inspects the *rendered* output, never the raw template source.
+    """
+    raw = (ROOT / "template" / "mise.toml.jinja").read_text()
+    try:
+        tomllib.loads(raw)
+    except tomllib.TOMLDecodeError as e:
+        pytest.fail(
+            "template/mise.toml.jinja isn't valid TOML in its raw, "
+            "unrendered form, which means Renovate's `mise` manager can't "
+            "parse it and silently stops tracking every tool pin in this "
+            "file. Any Jinja control-flow tag (`[%- if %]`, `[%- endif %]`, "
+            "etc.) must be kept behind a leading `#` so the raw source still "
+            "reads as a TOML comment line to a plain TOML parser.\n\n"
+            f"{e}",
+            pytrace=False,
+        )

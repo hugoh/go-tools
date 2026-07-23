@@ -2,12 +2,17 @@
 go = "1.26.5"
 "go:github.com/vladopajic/go-test-coverage/v2" = "2.18.8"
 golangci-lint = "2.12.2"
-[%- if has_goreleaser %]
+# Wrapped in TOML comments (with an explicit re-inserted newline) so this
+# stays valid raw TOML even before Jinja renders it — Renovate's mise
+# manager parses this file as literal TOML pre-render, and a bare Jinja
+# block tag looks exactly like a TOML table header to it, which silently
+# blinded Renovate to every pin in this file (not just goreleaser's).
+# [%- if has_goreleaser %][[ "\n" -]]
 goreleaser = "2.17.0"
-[%- endif %]
+# [%- endif %][[ "\n" -]]
 cocogitto = "7.0.0"
 gotestsum = "1.13.0"
-hk = "1.51.0"
+hk = "1.52.0"
 rumdl = "0.2.34"
 zizmor = "1.27.0"
 biome = "2.5.4"
