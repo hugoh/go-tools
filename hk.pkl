@@ -19,6 +19,16 @@ local linters = new Mapping<String, Step> {
   ["shfmt_dev_tasks"] = (Builtins.shfmt) {
     match_any = List((FileSelector) { glob = List("mise-tasks/*") })
   }
+  // template/mise.toml.jinja is kept parseable as raw TOML (see
+  // test_mise_toml_jinja_is_raw_toml), but its .jinja extension keeps it out
+  // of tombi/tombi_format's default `**/*.toml` glob, so it's checked here
+  // explicitly.
+  ["tombi_template_mise"] = (Builtins.tombi) {
+    glob = "template/mise.toml.jinja"
+  }
+  ["tombi_format_template_mise"] = (Builtins.tombi_format) {
+    glob = "template/mise.toml.jinja"
+  }
   ...Base.python
   ["ty"] = (Builtins.ty) {
     check = "uv venv --quiet --clear .cache/ty-venv && uv pip install --quiet --python .cache/ty-venv -r test/requirements-render-check.txt && uvx --with ty==0.0.57 ty check --python .cache/ty-venv {{files}}"
