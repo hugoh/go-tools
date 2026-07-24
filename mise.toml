@@ -18,7 +18,9 @@ hk = "1.53.0"
 goreleaser = "2.17.0"
 ruff = "0.15.22"
 ty = "0.0.60"
-"npm:renovate" = "latest"
+"npm:renovate" = { version = "latest", trust_policy_excludes = [
+  "@yarnpkg/libzip@3.2.2",
+] }
 cocogitto = "7.0.0"
 
 [settings]
@@ -28,9 +30,6 @@ task.timings = false
 # guard currently blocks npm:renovate via a transitive dep
 # (@yarnpkg/libzip@3.2.2 dropped provenance attestation that 3.2.0/3.2.1
 # had) - unrelated to which renovate version we pin, and out of our
-# control. Pin the backend to plain npm for this repo's own tool installs
-# so that unblocks. The Copier template (template/mise.toml.jinja) keeps
-# aube's default for consumer repos - that's about catching regressions
-# in tools *we* pin directly (like npm:cpd), a different tradeoff.
-[env]
-AUBE_TRUST_POLICY_EXCLUDE = "@yarnpkg/libzip@3.2.2"
+# control. Rather than opting the whole repo out of aube, exclude just
+# that reviewed dependency from the trust-downgrade check on the
+# npm:renovate tool itself (see the trust_policy_excludes option above).
