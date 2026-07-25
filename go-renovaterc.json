@@ -38,8 +38,7 @@
     {
       "matchManagers": ["copier"],
       "matchPackageNames": ["https://github.com/hugoh/go-tools.git"],
-      "minimumReleaseAge": null,
-      "schedule": ["at any time"],
+      "extends": ["github>hugoh/renovate-config//presets/chain-debounce"],
       "automerge": true
     },
     {
