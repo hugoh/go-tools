@@ -7,14 +7,11 @@
     ":automergeLinters",
     ":automergeMinor",
     ":automergeDigest",
-    "schedule:monthly"
+    "schedule:monthly",
+    "github>hugoh/renovate-config//presets/vulnerability-alerts",
+    "github>hugoh/renovate-config//presets/major-updates-ungrouped"
   ],
   "minimumReleaseAge": "7 days",
-  "vulnerabilityAlerts": {
-    "labels": ["security"],
-    "automerge": true,
-    "schedule": ["at any time"]
-  },
   "packageRules": [
     {
       "matchManagers": ["github-actions"],
@@ -24,11 +21,6 @@
       "matchManagers": ["gomod"],
       "matchUpdateTypes": ["minor", "patch"],
       "groupName": "Go dependencies"
-    },
-    {
-      "matchUpdateTypes": ["major"],
-      "groupName": "Major updates",
-      "automerge": false
     },
     {
       "matchManagers": ["github-actions"],

@@ -1,6 +1,9 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>hugoh/go-tools:go-renovaterc"],
+  "extends": [
+    "github>hugoh/go-tools:go-renovaterc",
+    "github>hugoh/renovate-config//presets/npm-renovate-debounce"
+  ],
   "customManagers": [
     {
       "customType": "regex",
