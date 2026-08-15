@@ -1,25 +1,27 @@
 [tools]
-copier = "9.17.0"
-uv = "0.11.32"
+copier = "9.17.1"
+uv = "0.12.4"
 shellcheck = "0.11.0"
 "github:anordal/shellharden" = "4.3.2"
 shfmt = "3.13.1"
-tombi = "1.2.0"
+tombi = "1.4.0"
 "github:owenlamont/ryl" = "0.21.0"
 actionlint = "1.7.12"
 pinact = "4.1.0"
 ghalint = "1.5.6"
 gitleaks = "8.30.1"
-biome = "2.5.4"
-rumdl = "0.2.34"
-zizmor = "1.27.0"
-typos = "1.48.0"
-hk = "1.54.0"
-goreleaser = "2.17.0"
-ruff = "0.15.22"
-ty = "0.0.63"
-"npm:renovate" = { version = "44.14.3", trust_policy_excludes = [
+biome = "2.5.8"
+rumdl = "0.2.55"
+zizmor = "1.29.0"
+typos = "1.49.0"
+hk = "1.55.0"
+goreleaser = "2.17.1"
+ruff = "0.16.3"
+ty = "0.0.71"
+"npm:renovate" = { version = "44.30.0", trust_policy_excludes = [
   "@yarnpkg/libzip@3.2.2",
+  "@smithy/core@3.33.0",
+  "@smithy/node-http-handler@4.11.0",
 ] }
 cocogitto = "7.0.0"
 
