@@ -11,13 +11,13 @@ import hashlib
 import json
 import os
 import subprocess
-import tomllib
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from pathlib import Path
 
 import copier
 import pytest
+import tomllib
 import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -50,7 +50,9 @@ def file_lock(path):
 
 
 def run(cmd, cwd=None, env=None):
-    proc = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True)
+    proc = subprocess.run(
+        cmd, cwd=cwd, env=env, capture_output=True, text=True, check=False
+    )
     return proc.returncode == 0, proc.stdout + proc.stderr
 
 
@@ -218,7 +220,7 @@ def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
     # other cases, so dividing avoids the combined thread count oversubscribing
     # the machine. Never exceeds len(checks), since more threads than tasks
     # buys nothing.
-    xdist_workers = int(os.environ.get("PYTEST_XDIST_WORKER_COUNT", 1))
+    xdist_workers = int(os.environ.get("PYTEST_XDIST_WORKER_COUNT", "1"))
     max_workers = max(1, min(len(checks), (os.cpu_count() or 4) // xdist_workers))
     with ThreadPoolExecutor(max_workers=max_workers) as pool:
         results = dict(zip(checks, pool.map(lambda fn: fn(), checks.values())))
