@@ -65,7 +65,20 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.gh_token }}
         run: |
-          goreleaser check
+          out=$(goreleaser check 2>&1)
+          ec=$?
+          printf '%s\n' "$out"
+          if [ "$ec" -ne 0 ]; then
+            # goreleaser check fails even on configs it calls "valid" if
+            # they use a deprecated property (e.g. brews instead of
+            # homebrew_casks). Deprecation is a lint concern, not a
+            # validity one, so don't hard-fail the release on it.
+            if [ "$ec" -eq 2 ] && printf '%s\n' "$out" | grep -q 'configuration is valid, but uses deprecated properties'; then
+              :
+            else
+              exit "$ec"
+            fi
+          fi
           if [ "${{ github.event_name }}" != "push" ] && [ "${{ github.event_name }}" != "workflow_dispatch" ]; then
             echo "--- Dry-run: version preview ---"
             cog bump --auto --dry-run --skip-untracked || echo "(no version bump needed)"
