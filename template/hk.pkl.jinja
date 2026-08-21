@@ -54,7 +54,7 @@ local linters = new Mapping<String, Step> {
   }
 [%- if has_goreleaser %]
   ["goreleaser"]= {
-    check = "goreleaser check"
+    check = "mise run lint-release"
   }
 [%- endif %]
 }
