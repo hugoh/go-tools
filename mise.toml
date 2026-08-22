@@ -24,8 +24,6 @@ ty = "0.0.73"
   "@smithy/node-http-handler@4.11.0",
 ] }
 cocogitto = "7.0.0"
-go = "latest"
-golangci-lint = "2.13.1"
 
 [settings]
 task.timings = false
