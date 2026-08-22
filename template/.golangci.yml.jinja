@@ -2,9 +2,13 @@ version: "2"
 linters:
   default: all
   disable:
+    - depguard
+    - exhaustruct
+    - exhaustruct_v5
     - gomodguard
     - noinlineerr
     - paralleltest
+    - testpackage
 [%- for l in golangci_extra_disable %]
     - [[ l ]]
 [%- endfor %]
@@ -17,6 +21,8 @@ linters:
     rules:
       - path: _test\.go$
         linters:
+          - err113
+          - varnamelen
 [%- for l in golangci_test_exclude_linters %]
           - [[ l ]]
 [%- endfor %]

@@ -4,7 +4,7 @@ has_test_int: true
 has_gen: false
 has_fuzz: true
 golangci_extra_disable: []
-golangci_test_exclude_linters: [depguard, goconst, varnamelen]
+golangci_test_exclude_linters: [depguard, goconst]
 golangci_extra_exclusions:
   - path: "thresholds.go"
     linters: [mnd]

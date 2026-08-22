@@ -6,8 +6,8 @@ has_test_int: true
 test_int_cmd: "gotestsum -- -count=1 -race -tags=integration ./..."
 has_gen: false
 has_fuzz: false
-golangci_extra_disable: [depguard, exhaustruct, godoclint, testpackage]
-golangci_test_exclude_linters: [err113, noctx, varnamelen]
+golangci_extra_disable: [godoclint]
+golangci_test_exclude_linters: [noctx]
 golangci_extra_exclusions: []
 coverage_total: 80
 testcoverage_overrides: []

@@ -127,7 +127,7 @@ golangci_extra_disable:
 
 golangci_test_exclude_linters:
   type: json
-  default: ["err113", "funlen", "varnamelen"]
+  default: ["funlen"]
   help: Linters excluded for _test.go files
 
 golangci_settings:
