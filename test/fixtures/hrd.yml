@@ -16,14 +16,11 @@ pages_gen_cmd: ["go run ./cmd/genweb"]
 pages_dir: "site"
 has_fuzz: false
 golangci_extra_disable: [
-  depguard,
-  exhaustruct,
   godoclint,
   ireturn,
-  testpackage,
   varnamelen,
 ]
-golangci_test_exclude_linters: [err113, noctx, varnamelen, goconst, gosec]
+golangci_test_exclude_linters: [noctx, goconst, gosec]
 golangci_extra_exclusions: []
 coverage_total: 90
 testcoverage_overrides: [{path: "backends/", threshold: 100}]

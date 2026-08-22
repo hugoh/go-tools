@@ -4,8 +4,8 @@ has_executable: false
 has_test_int: true
 has_gen: false
 has_fuzz: false
-golangci_extra_disable: [depguard, exhaustruct, testpackage]
-golangci_test_exclude_linters: [err113, funlen, varnamelen]
+golangci_extra_disable: []
+golangci_test_exclude_linters: [funlen]
 golangci_extra_exclusions: []
 coverage_total: 90
 testcoverage_overrides: []
