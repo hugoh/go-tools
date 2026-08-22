@@ -65,8 +65,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.gh_token }}
         run: |
+          set +e
           out=$(goreleaser check 2>&1)
           ec=$?
+          set -e
           printf '%s\n' "$out"
           if [ "$ec" -ne 0 ]; then
             # goreleaser check fails even on configs it calls "valid" if
