@@ -206,7 +206,7 @@ def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
             cwd=tmp_path,
         )
         checks["goreleaser check"] = lambda: run(
-            ["goreleaser", "check"],
+            ["mise-tasks/lint-release"],
             cwd=tmp_path,
             env={**os.environ, "TAP_GITHUB_TOKEN": "x"},
         )
