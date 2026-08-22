@@ -58,16 +58,18 @@ nfpms:
 [%- endif %]
 [%- if has_homebrew_cask %]
 
-homebrew_casks:
+brews:
+  # DEPRECATED but intentional: homebrew_casks requires Gatekeeper-signed
+  # binaries or macOS flags the cask as malware. brews (Formula) has no
+  # such requirement. See https://goreleaser.com/deprecations/#brews
   - name: [[ project_name ]]
     repository:
       owner: hugoh
       name: homebrew-tap
       token: "{{ .Env.TAP_GITHUB_TOKEN }}"
+    directory: Formula
     description: "[[ project_description ]]"
     homepage: "https://github.com/hugoh/[[ project_name ]]"
-    binaries:
-      - [[ project_name ]]
 [%- endif %]
 
 [%- raw %]
