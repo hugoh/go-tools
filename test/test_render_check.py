@@ -56,6 +56,20 @@ def run(cmd, cwd=None, env=None):
     return proc.returncode == 0, proc.stdout + proc.stderr
 
 
+def goreleaser_check(cwd, env):
+    """Run `goreleaser check`, tolerating deprecated-but-valid config.
+
+    Mirrors the release workflow's Validate step: `goreleaser check` exits
+    non-zero even on configs it calls valid if they use a deprecated
+    property (e.g. brews instead of homebrew_casks). Deprecation is a lint
+    concern, not a validity one, so don't fail the render check on it.
+    """
+    ok, log = run(["goreleaser", "check"], cwd=cwd, env=env)
+    if not ok and "configuration is valid, but uses deprecated properties" in log:
+        ok = True
+    return ok, log
+
+
 @pytest.mark.parametrize("label,data_file", CASES, ids=[c[0] for c in CASES])
 def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
     # Calling copier's own Python API in-process instead of shelling out to
@@ -205,10 +219,9 @@ def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
             ["git", "remote", "add", "origin", f"https://github.com/hugoh/{label}.git"],
             cwd=tmp_path,
         )
-        checks["goreleaser check"] = lambda: run(
-            ["goreleaser", "check"],
-            cwd=tmp_path,
-            env={**os.environ, "TAP_GITHUB_TOKEN": "x"},
+        checks["goreleaser check"] = lambda: goreleaser_check(
+            tmp_path,
+            {**os.environ, "TAP_GITHUB_TOKEN": "x"},
         )
 
     # These checks are independent of each other (aside from hk_validate's
