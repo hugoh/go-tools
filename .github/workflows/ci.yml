@@ -23,8 +23,8 @@ jobs:
     permissions:
       contents: read
     outputs:
-      render: ${{ steps.filter.outputs.render }}
-      renovate: ${{ steps.filter.outputs.renovate }}
+      render: ${{ steps.filter.outputs.render == 'true' || steps.mise-tool-bumps.outputs.copier == 'true' }}
+      renovate: ${{ steps.filter.outputs.renovate == 'true' || steps.mise-tool-bumps.outputs.renovate == 'true' }}
     steps:
       - uses: hugoh/gh-workflows/setup@0605171371448c645486e3200e1940b1813ef9f1 # v1.12.0
         with:
@@ -45,6 +45,32 @@ jobs:
               - 'go-renovaterc.json'
               - 'presets/**'
               - 'template/.renovaterc.json'
+      - name: Detect mise.toml tool version bumps
+        id: mise-tool-bumps
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          # mise.toml pins the copier/renovate CLI *tool* versions this repo
+          # itself runs with — separate from the paths above, which only
+          # cover copier/renovate *config* files. A Renovate-driven bump of
+          # either tool's pinned version in mise.toml should also trigger
+          # the matching check, without making every unrelated mise.toml
+          # tool bump (shellcheck, hk, etc.) trigger both.
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            base="$PR_BASE_SHA"
+          elif [ -n "$PUSH_BEFORE_SHA" ] && [ "$PUSH_BEFORE_SHA" != "0000000000000000000000000000000000000000" ]; then
+            base="$PUSH_BEFORE_SHA"
+          else
+            base="HEAD~1"
+          fi
+          copier=false
+          renovate=false
+          git diff --quiet -G'^copier = ' "$base" HEAD -- mise.toml || copier=true
+          git diff --quiet -G'^"npm:renovate" = ' "$base" HEAD -- mise.toml || renovate=true
+          echo "copier=$copier" >> "$GITHUB_OUTPUT"
+          echo "renovate=$renovate" >> "$GITHUB_OUTPUT"
 
   hk:
     uses: ./.github/workflows/go-hk.yml
