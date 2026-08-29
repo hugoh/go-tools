@@ -33,13 +33,14 @@ local linters = new Mapping<String, Step> {
   ["ty"] = (Builtins.ty) {
     check = "uv venv --quiet --clear .cache/ty-venv && uv pip install --quiet --python .cache/ty-venv -r test/requirements-render-check.txt && uvx --with ty==0.0.57 ty check --python .cache/ty-venv {{files}}"
   }
-  ["render_check"] = {
-    check = "mise run render-check"
-    profiles = List("ci")
-  }
   ...Base.renovate
+  // Split into its own profile (rather than "ci") so the main CI hk job
+  // doesn't run this on every push; a separate, paths-filtered CI job
+  // invokes it with --profile ci-renovate only when renovate config files
+  // changed.
   ["renovate_config_validator"] = (Base.renovate["renovate_config_validator"]) {
     glob = List(".renovaterc.json", "go-renovaterc.json", "presets/*.json", "template/.renovaterc.json")
+    profiles = List("ci-renovate")
   }
   ["conventional_commit"] {
     check = "cog check --from-latest-tag"
