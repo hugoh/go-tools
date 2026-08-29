@@ -4,11 +4,14 @@ import json
 import os
 import subprocess
 import sys
+
 import tomllib
 
 
 def load_tools(ref: str) -> dict:
-    proc = subprocess.run(["git", "show", f"{ref}:mise.toml"], capture_output=True)
+    proc = subprocess.run(
+        ["git", "show", f"{ref}:mise.toml"], capture_output=True, check=False
+    )
     if proc.returncode != 0:
         return {}
     return tomllib.loads(proc.stdout.decode()).get("tools", {})
