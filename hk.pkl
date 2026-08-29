@@ -10,19 +10,14 @@ local linters = new Mapping<String, Step> {
   // default match_any (which now also matches any shebang-detected shell
   // script by type, e.g. template/mise-tasks/* — the copier template's own
   // scripts, checked separately via render-check, not here).
-  // ci-tool-bumps is excluded: it's a Python script (no shell syntax) that
-  // just happens to live under mise-tasks/* to be runnable via `mise run`.
   ["shellcheck_dev_tasks"] = (Builtins.shellcheck) {
     match_any = List((FileSelector) { glob = List("mise-tasks/*") })
-    exclude = List("mise-tasks/ci-tool-bumps")
   }
   ["shellharden_dev_tasks"] = (Builtins.shellharden) {
     glob = List("mise-tasks/*")
-    exclude = List("mise-tasks/ci-tool-bumps")
   }
   ["shfmt_dev_tasks"] = (Builtins.shfmt) {
     match_any = List((FileSelector) { glob = List("mise-tasks/*") })
-    exclude = List("mise-tasks/ci-tool-bumps")
   }
   // template/mise.toml.jinja is kept parseable as raw TOML (see
   // test_mise_toml_jinja_is_raw_toml), but its .jinja extension keeps it out

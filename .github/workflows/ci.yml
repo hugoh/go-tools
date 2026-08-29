@@ -26,7 +26,7 @@ jobs:
       render: ${{ steps.filter.outputs.render == 'true' || fromJSON(steps.mise-tool-bumps.outputs.tools).copier == true }}
       renovate: ${{ steps.filter.outputs.renovate == 'true' || fromJSON(steps.mise-tool-bumps.outputs.tools)['npm:renovate'] == true }}
     steps:
-      - uses: hugoh/gh-workflows/setup@0605171371448c645486e3200e1940b1813ef9f1 # v1.12.0
+      - uses: hugoh/gh-workflows/setup@def9793db21b497f44589cf409bc7d212166abc3 # v1.13.0
         with:
           fetch-depth: 0
       - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
@@ -45,27 +45,15 @@ jobs:
               - 'go-renovaterc.json'
               - 'presets/**'
               - 'template/.renovaterc.json'
+      # mise.toml pins the copier/renovate CLI *tool* versions this repo itself
+      # runs with — separate from the paths above, which only cover
+      # copier/renovate *config* files. A Renovate-driven bump of either tool's
+      # pinned version in mise.toml should also trigger the matching check,
+      # without making every unrelated mise.toml tool bump (shellcheck, hk,
+      # etc.) trigger both.
       - name: Detect mise.toml tool version bumps
         id: mise-tool-bumps
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          PUSH_BEFORE_SHA: ${{ github.event.before }}
-        run: |
-          # mise.toml pins the copier/renovate CLI *tool* versions this repo
-          # itself runs with — separate from the paths above, which only
-          # cover copier/renovate *config* files. A Renovate-driven bump of
-          # either tool's pinned version in mise.toml should also trigger
-          # the matching check, without making every unrelated mise.toml
-          # tool bump (shellcheck, hk, etc.) trigger both.
-          if [ "$EVENT_NAME" = "pull_request" ]; then
-            base="$PR_BASE_SHA"
-          elif [ -n "$PUSH_BEFORE_SHA" ] && [ "$PUSH_BEFORE_SHA" != "0000000000000000000000000000000000000000" ]; then
-            base="$PUSH_BEFORE_SHA"
-          else
-            base="HEAD~1"
-          fi
-          echo "tools=$(mise run ci-tool-bumps "$base")" >> "$GITHUB_OUTPUT"
+        uses: hugoh/gh-workflows/tool-bumps@def9793db21b497f44589cf409bc7d212166abc3 # v1.13.0
 
   hk:
     uses: ./.github/workflows/go-hk.yml
@@ -80,7 +68,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: hugoh/gh-workflows/setup@0605171371448c645486e3200e1940b1813ef9f1 # v1.12.0
+      - uses: hugoh/gh-workflows/setup@def9793db21b497f44589cf409bc7d212166abc3 # v1.13.0
       - name: Render check
         run: mise run render-check
 
@@ -92,7 +80,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: hugoh/gh-workflows/setup@0605171371448c645486e3200e1940b1813ef9f1 # v1.12.0
+      - uses: hugoh/gh-workflows/setup@def9793db21b497f44589cf409bc7d212166abc3 # v1.13.0
       - name: hk check (renovate config)
         run: hk check --no-progress --profile ci-renovate --all --no-fail-fast
 
