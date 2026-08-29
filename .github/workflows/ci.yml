@@ -23,8 +23,8 @@ jobs:
     permissions:
       contents: read
     outputs:
-      render: ${{ steps.filter.outputs.render == 'true' || steps.mise-tool-bumps.outputs.copier == 'true' }}
-      renovate: ${{ steps.filter.outputs.renovate == 'true' || steps.mise-tool-bumps.outputs.renovate == 'true' }}
+      render: ${{ steps.filter.outputs.render == 'true' || fromJSON(steps.mise-tool-bumps.outputs.tools).copier == true }}
+      renovate: ${{ steps.filter.outputs.renovate == 'true' || fromJSON(steps.mise-tool-bumps.outputs.tools)['npm:renovate'] == true }}
     steps:
       - uses: hugoh/gh-workflows/setup@0605171371448c645486e3200e1940b1813ef9f1 # v1.12.0
         with:
@@ -65,12 +65,7 @@ jobs:
           else
             base="HEAD~1"
           fi
-          copier=false
-          renovate=false
-          git diff --quiet -G'^copier = ' "$base" HEAD -- mise.toml || copier=true
-          git diff --quiet -G'^"npm:renovate" = ' "$base" HEAD -- mise.toml || renovate=true
-          echo "copier=$copier" >> "$GITHUB_OUTPUT"
-          echo "renovate=$renovate" >> "$GITHUB_OUTPUT"
+          echo "tools=$(mise run ci-tool-bumps "$base")" >> "$GITHUB_OUTPUT"
 
   hk:
     uses: ./.github/workflows/go-hk.yml
