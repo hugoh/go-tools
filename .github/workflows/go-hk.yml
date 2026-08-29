@@ -13,20 +13,10 @@ jobs:
       cancel-in-progress: true
     permissions:
       contents: read
-    env:
-      MISE_ENV: ci
     steps:
-      - name: Checkout code with full history
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: hugoh/gh-workflows/setup@0605171371448c645486e3200e1940b1813ef9f1 # v1.12.0
         with:
-          persist-credentials: false
           fetch-depth: 0
-      - name: Setup mise
-        uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d # v4.2.0
-      - name: hk checks
+      - uses: hugoh/gh-workflows/hk-check@0605171371448c645486e3200e1940b1813ef9f1 # v1.12.0
         env:
           PINACT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: hk check --no-progress --profile ci --all --no-fail-fast
-      - name: Display hk log on failure
-        if: failure()
-        run: cat /home/runner/.local/state/hk/output.log
