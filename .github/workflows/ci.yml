@@ -17,13 +17,75 @@ on:
 permissions: {}
 
 jobs:
+  changes:
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      render: ${{ steps.filter.outputs.render == 'true' || fromJSON(steps.mise-tool-bumps.outputs.tools).copier == true }}
+      renovate: ${{ steps.filter.outputs.renovate == 'true' || fromJSON(steps.mise-tool-bumps.outputs.tools)['npm:renovate'] == true }}
+    steps:
+      - uses: hugoh/gh-workflows/setup@def9793db21b497f44589cf409bc7d212166abc3 # v1.13.0
+        with:
+          fetch-depth: 0
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        id: filter
+        with:
+          filters: |
+            render:
+              - 'template/**'
+              - 'test/fixtures/**'
+              - 'test/test_render_check.py'
+              - 'test/requirements-render-check.txt'
+              - 'mise-tasks/render-check'
+              - 'copier.yml'
+            renovate:
+              - '.renovaterc.json'
+              - 'go-renovaterc.json'
+              - 'presets/**'
+              - 'template/.renovaterc.json'
+      # mise.toml pins the copier/renovate CLI *tool* versions this repo itself
+      # runs with — separate from the paths above, which only cover
+      # copier/renovate *config* files. A Renovate-driven bump of either tool's
+      # pinned version in mise.toml should also trigger the matching check,
+      # without making every unrelated mise.toml tool bump (shellcheck, hk,
+      # etc.) trigger both.
+      - name: Detect mise.toml tool version bumps
+        id: mise-tool-bumps
+        uses: hugoh/gh-workflows/tool-bumps@def9793db21b497f44589cf409bc7d212166abc3 # v1.13.0
+
   hk:
     uses: ./.github/workflows/go-hk.yml
     permissions:
       contents: read
 
+  render-check:
+    needs: changes
+    if: needs.changes.outputs.render == 'true'
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: hugoh/gh-workflows/setup@def9793db21b497f44589cf409bc7d212166abc3 # v1.13.0
+      - name: Render check
+        run: mise run render-check
+
+  renovate-check:
+    needs: changes
+    if: needs.changes.outputs.renovate == 'true'
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: hugoh/gh-workflows/setup@def9793db21b497f44589cf409bc7d212166abc3 # v1.13.0
+      - name: hk check (renovate config)
+        run: hk check --no-progress --profile ci-renovate --all --no-fail-fast
+
   release:
-    needs: [hk]
+    needs: [hk, render-check, renovate-check]
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     timeout-minutes: 10
     runs-on: ubuntu-latest
@@ -31,7 +93,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout code with full history
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
