@@ -26,8 +26,9 @@ jobs:
       render: ${{ steps.filter.outputs.render == 'true' || fromJSON(steps.mise-tool-bumps.outputs.tools).copier == true }}
       renovate: ${{ steps.filter.outputs.renovate == 'true' || fromJSON(steps.mise-tool-bumps.outputs.tools)['npm:renovate'] == true }}
     steps:
-      - uses: hugoh/gh-workflows/setup@def9793db21b497f44589cf409bc7d212166abc3 # v1.13.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           fetch-depth: 0
       - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         id: filter
