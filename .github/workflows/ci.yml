@@ -63,7 +63,9 @@ jobs:
 
   render-check:
     needs: changes
-    if: needs.changes.outputs.render == 'true'
+    # Always run on push/dispatch so the release job's `needs` are never
+    # skipped (a skipped need skips release too). Only the paths filter on PRs.
+    if: github.event_name != 'pull_request' || needs.changes.outputs.render == 'true'
     timeout-minutes: 30
     runs-on: ubuntu-latest
     permissions:
@@ -87,7 +89,7 @@ jobs:
 
   renovate-check:
     needs: changes
-    if: needs.changes.outputs.renovate == 'true'
+    if: github.event_name != 'pull_request' || needs.changes.outputs.renovate == 'true'
     timeout-minutes: 30
     runs-on: ubuntu-latest
     permissions:
