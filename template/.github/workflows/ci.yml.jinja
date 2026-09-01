@@ -20,12 +20,12 @@ permissions: {}
 
 jobs:
   hk:
-    uses: hugoh/go-tools/.github/workflows/go-hk.yml@[[ _copier_conf.vcs_ref_hash ]]
+    uses: hugoh/go-tools/.github/workflows/go-hk.yml@[[ _copier_conf.vcs_ref_hash ]] # [[ _copier_answers['_commit'] ]]
     permissions:
       contents: read
 
   goci:
-    uses: hugoh/go-tools/.github/workflows/go-ci.yml@[[ _copier_conf.vcs_ref_hash ]]
+    uses: hugoh/go-tools/.github/workflows/go-ci.yml@[[ _copier_conf.vcs_ref_hash ]] # [[ _copier_answers['_commit'] ]]
     permissions:
       contents: read
 
@@ -34,7 +34,7 @@ jobs:
   pages:
     needs: [hk, goci]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    uses: hugoh/go-tools/.github/workflows/go-pages.yml@[[ _copier_conf.vcs_ref_hash ]]
+    uses: hugoh/go-tools/.github/workflows/go-pages.yml@[[ _copier_conf.vcs_ref_hash ]] # [[ _copier_answers['_commit'] ]]
     permissions:
       contents: read
       pages: write
@@ -47,7 +47,7 @@ jobs:
 
   release:
     needs: [hk, goci]
-    uses: hugoh/go-tools/.github/workflows/go-release.yml@[[ _copier_conf.vcs_ref_hash ]]
+    uses: hugoh/go-tools/.github/workflows/go-release.yml@[[ _copier_conf.vcs_ref_hash ]] # [[ _copier_answers['_commit'] ]]
     permissions:
       contents: write
     with:

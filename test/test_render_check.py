@@ -10,6 +10,7 @@ import glob
 import hashlib
 import json
 import os
+import re
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
@@ -89,6 +90,21 @@ def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
         tomllib.loads((tmp_path / "mise.toml").read_text())
     except tomllib.TOMLDecodeError as e:
         failures.append(f"generated mise.toml is not valid TOML:\n{e}")
+
+    # Every go-tools reusable-workflow `uses:` must be a commit-hash pin
+    # followed by a `# <version>` comment. Renovate's github-actions manager
+    # is disabled for hugoh/go-tools in consumer repos, so this comment is
+    # only ever refreshed by `copier update` regenerating the file — it must
+    # come from the template, not be hand-added downstream.
+    ci_yml = (tmp_path / ".github" / "workflows" / "ci.yml").read_text()
+    for line in ci_yml.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("uses: hugoh/go-tools/") and not re.search(
+            r"@[0-9a-f]{7,40} # \S", stripped
+        ):
+            failures.append(
+                f"go-tools reusable workflow not hash+version pinned:\n{line}"
+            )
 
     cache_dir = tmp_path_factory.getbasetemp().parent
     hk_lock_path = cache_dir / "hk-validate.lock"
