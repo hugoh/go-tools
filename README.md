@@ -55,6 +55,28 @@ Referenced automatically by the templated `.github/workflows/ci.yml` via `uses:`
 - `go-hk.yml` — runs `hk check` (lint/format/security checks via mise+hk).
 - `go-ci.yml` — runs `mise ci` (build, test, coverage).
 - `go-release.yml` — cocogitto version bump + goreleaser release, triggered by a tag push (or dry-run validated on PRs).
+- `go-tool-compat.yml` — runs a repo's integration tests against the newest few version series of a mise tool (version list via `hugoh/gh-workflows/mise-latest-versions`). **Opt-in**, not wired by the template — used by `hrd` and `jj-trim`, which exec a real `jj`. Add a caller workflow with its own triggers:
+
+  ```yaml
+  # .github/workflows/jj-compat.yml
+  name: jj compatibility
+  on:
+    push: { branches: [main], paths: ["internal/jj/**", "go.mod", "go.sum", ".github/workflows/jj-compat.yml"] }
+    pull_request: { branches: [main], paths: ["internal/jj/**", "go.mod", "go.sum", ".github/workflows/jj-compat.yml"] }
+    schedule: [{ cron: "0 6 * * 1" }] # catch tool releases landed between PRs
+    workflow_dispatch:
+  permissions: {}
+  jobs:
+    jj:
+      uses: hugoh/go-tools/.github/workflows/go-tool-compat.yml@<sha>
+      permissions:
+        contents: read
+      with:
+        tool: jj
+        test-target: "./internal/jj/..."
+  ```
+
+  Inputs: `tool` (required, mise tool name), `test-target` (required, go package pattern), `level` (`major`/`minor`/`patch`, default `minor`), `count` (default `3`). The test step exports `REQUIRE_INTEGRATION=1` — consumer test helpers should turn "tool not on PATH" from a skip into a hard failure when it's set, so a broken tool release can't pass by being skipped.
 
 ### Manually forcing a version bump in a consumer repo
 
