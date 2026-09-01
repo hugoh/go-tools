@@ -1,0 +1,69 @@
+---
+name: go-tool-compat
+
+on:
+  workflow_call:
+    inputs:
+      tool:
+        description: "mise tool to vary, e.g. jj"
+        type: string
+        required: true
+      test-target:
+        description: "go package pattern for the integration tests, e.g. ./internal/jj/..."
+        type: string
+        required: true
+      level:
+        description: "version-series granularity: major, minor, or patch"
+        type: string
+        default: minor
+      count:
+        description: "how many of the newest tool version series to test"
+        type: number
+        default: 3
+
+jobs:
+  versions:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    concurrency:
+      group: go-tool-compat-versions-${{ inputs.tool }}-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: true
+    permissions:
+      contents: read
+    outputs:
+      matrix: ${{ steps.pick.outputs.matrix }}
+    steps:
+      - uses: hugoh/gh-workflows/setup@590f4d47fd56774ed9ad0e4e9781c78b03c183cc # v1.15.0
+      - uses: hugoh/gh-workflows/mise-latest-versions@590f4d47fd56774ed9ad0e4e9781c78b03c183cc # v1.15.0
+        id: pick
+        with:
+          tool: ${{ inputs.tool }}
+          level: ${{ inputs.level }}
+          count: ${{ inputs.count }}
+
+  test:
+    needs: versions
+    timeout-minutes: 20
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ${{ fromJSON(needs.versions.outputs.matrix) }}
+    steps:
+      - uses: hugoh/gh-workflows/setup@590f4d47fd56774ed9ad0e4e9781c78b03c183cc # v1.15.0
+      # No MISE_ENV=ci: a repo's mise.ci.toml pins the tool (e.g. jj) too, and
+      # an env-specific config outranks the `mise use` below — which would
+      # silently defeat the matrix.
+      - name: ${{ inputs.tool }} ${{ matrix.version }} — ${{ inputs.test-target }}
+        env:
+          TOOL: ${{ inputs.tool }}
+          TOOL_VERSION: ${{ matrix.version }}
+          TEST_TARGET: ${{ inputs.test-target }}
+          REQUIRE_INTEGRATION: "1" # consumer test code turns skips into hard failures
+        run: |
+          set -euo pipefail
+          mise use "${TOOL}@${TOOL_VERSION}"
+          mise exec -- "$TOOL" --version
+          mise exec -- gotestsum -- -race -shuffle=on "$TEST_TARGET"
