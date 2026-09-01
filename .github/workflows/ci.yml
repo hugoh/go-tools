@@ -72,6 +72,18 @@ jobs:
       contents: read
     steps:
       - uses: hugoh/gh-workflows/setup@def9793db21b497f44589cf409bc7d212166abc3 # v1.13.0
+      # render-check renders template/hk.pkl.jinja into throwaway tmpdirs and
+      # runs `hk validate` against each; that populates the shared pkl package
+      # cache (~/.pkl/cache) from scratch on every cold runner, which is the
+      # bulk of the job's wall time. Key on the template's pkl deps so a pin
+      # bump busts it.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.pkl/cache
+            ~/.cache/uv
+          key: render-check-${{ runner.os }}-${{ hashFiles('template/hk.pkl.jinja', 'test/requirements-render-check.txt') }}
+          restore-keys: render-check-${{ runner.os }}-
       - name: Render check
         run: mise run render-check
 
