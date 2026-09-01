@@ -23,8 +23,10 @@
       "groupName": "Go dependencies"
     },
     {
+      "description": "ci.yml's hugoh/go-tools reusable-workflow pins are Copier-owned (regenerated with a version comment on every `copier update`), so keep Renovate's github-actions manager off them to avoid the two racing. Scoped to ci.yml only: a hand-maintained workflow that calls a go-tools reusable workflow (e.g. a repo-specific compat matrix) still gets managed normally.",
       "matchManagers": ["github-actions"],
       "matchPackageNames": ["hugoh/go-tools"],
+      "matchFileNames": [".github/workflows/ci.yml"],
       "enabled": false
     },
     {
