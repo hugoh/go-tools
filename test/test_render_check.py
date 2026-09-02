@@ -222,6 +222,13 @@ def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
             ["biome", "check", "--no-errors-on-unmatched", "."],
             cwd=tmp_path,
         ),
+        "golangci-lint config check": lambda: cached_check(
+            "golangci-lint-config",
+            [tmp_path / ".golangci.yml"],
+            lambda: run(
+                ["golangci-lint", "linters", "-c", ".golangci.yml"], cwd=tmp_path
+            ),
+        ),
         "mise install": mise_install,
         "hk validate": hk_validate,
     }
