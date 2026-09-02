@@ -190,31 +190,6 @@ def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
         # share byte-identical mise.toml content.
         return cached_check("mise-install", [tmp_path / "mise.toml"], do_install)
 
-    def golangci_lint_check():
-        def do_check():
-            # golangci-lint isn't a tool this repo's own mise.toml installs
-            # (only the rendered project's does, pinned in
-            # template/mise.toml.jinja) - `mise exec` resolves/installs the
-            # pinned version on demand from tmp_path's own mise.toml,
-            # regardless of whether the "mise install" check has completed
-            # yet (checks run concurrently, so plain `golangci-lint` on PATH
-            # can't be relied on here).
-            return run(
-                ["mise", "exec", "--", "golangci-lint", "linters", "-c", ".golangci.yml"],
-                cwd=tmp_path,
-                env={
-                    **os.environ,
-                    "MISE_TRUSTED_CONFIG_PATHS": str(tmp_path),
-                    "MISE_YES": "1",
-                },
-            )
-
-        return cached_check(
-            "golangci-lint-config",
-            [tmp_path / ".golangci.yml", tmp_path / "mise.toml"],
-            do_check,
-        )
-
     checks = {
         "shellcheck": lambda: cached_check(
             "shellcheck",
@@ -247,9 +222,15 @@ def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
             ["biome", "check", "--no-errors-on-unmatched", "."],
             cwd=tmp_path,
         ),
+        "golangci-lint config check": lambda: cached_check(
+            "golangci-lint-config",
+            [tmp_path / ".golangci.yml"],
+            lambda: run(
+                ["golangci-lint", "linters", "-c", ".golangci.yml"], cwd=tmp_path
+            ),
+        ),
         "mise install": mise_install,
         "hk validate": hk_validate,
-        "golangci-lint config check": golangci_lint_check,
     }
 
     if (tmp_path / ".goreleaser.yml").exists():
