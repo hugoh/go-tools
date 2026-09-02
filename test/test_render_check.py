@@ -106,6 +106,17 @@ def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
                 f"go-tools reusable workflow not hash+version pinned:\n{line}"
             )
 
+    marker = "managed by hugoh/go-tools via copier"
+    for path in sorted(tmp_path.rglob("*")):
+        if not path.is_file() or ".git" in path.parts:
+            continue
+        if path.name == ".copier-answers.yml":
+            continue
+        if marker not in path.read_text():
+            failures.append(
+                f'{path.relative_to(tmp_path)} is missing the "{marker}" marker'
+            )
+
     cache_dir = tmp_path_factory.getbasetemp().parent
     hk_lock_path = cache_dir / "hk-validate.lock"
 

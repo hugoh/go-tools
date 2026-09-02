@@ -42,6 +42,11 @@ local linters = new Mapping<String, Step> {
     glob = List(".renovaterc.json", "go-renovaterc.json", "presets/*.json", "template/.renovaterc.json")
     profiles = List("ci-renovate")
   }
+  ["template_managed_marker"] = new Step {
+    glob = List("template/**/*")
+    batch = true
+    check = "test/check-template-marker.sh {{files}}"
+  }
   ["conventional_commit"] {
     check = "cog check --from-latest-tag"
   }
