@@ -224,6 +224,10 @@ def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
         ),
         "mise install": mise_install,
         "hk validate": hk_validate,
+        "golangci-lint config check": lambda: run(
+            ["golangci-lint", "linters", "-c", ".golangci.yml"],
+            cwd=tmp_path,
+        ),
     }
 
     if (tmp_path / ".goreleaser.yml").exists():

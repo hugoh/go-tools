@@ -5,7 +5,6 @@ linters:
   disable:
     - depguard
     - exhaustruct
-    - exhaustruct_v5
     - gomodguard
     - noinlineerr
     - paralleltest
@@ -38,16 +37,6 @@ formatters:
   enable:
     - gci
     - gofumpt
-      extra:
-        # Groups function parameters with repeated types.
-        # Default: false
-        group-params: true
-        # Clothes naked returns in functions with named results.
-        # Default: false
-        clothe-returns: true
-        # Multi-line function calls with the opening parenthesis at the end of a line should place the closing parenthesis at the start of a line.
-        # Default: false
-        balance-calls: true
     - goimports
     - golines
   settings:
