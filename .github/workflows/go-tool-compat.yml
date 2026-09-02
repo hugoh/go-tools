@@ -67,3 +67,23 @@ jobs:
           mise use "${TOOL}@${TOOL_VERSION}"
           mise exec -- "$TOOL" --version
           mise exec -- gotestsum -- -race -shuffle=on "$TEST_TARGET"
+
+  # Stable check name for branch protection: the matrix leg names carry the
+  # tool version and churn on every upstream release, so they can't be pinned
+  # as required contexts. This aggregates them into one fixed `gate` check.
+  gate:
+    if: always()
+    needs: [versions, test]
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Require the whole version matrix to have passed
+        env:
+          VERSIONS_RESULT: ${{ needs.versions.result }}
+          TEST_RESULT: ${{ needs.test.result }}
+        run: |
+          set -euo pipefail
+          echo "versions=$VERSIONS_RESULT test=$TEST_RESULT"
+          [ "$VERSIONS_RESULT" = success ] || exit 1
+          [ "$TEST_RESULT" = success ] || exit 1
