@@ -14,6 +14,11 @@ on:
       tap_github_token:
         required: false
 
+# Scoped to the calling repo. Serialize releases; never cancel one mid-publish.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
   release:
     timeout-minutes: 30

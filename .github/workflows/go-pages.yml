@@ -10,6 +10,11 @@ on:
 
 permissions: {}
 
+# Scoped to the calling repo. One Pages deploy at a time; let a running one finish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
 jobs:
   build:
     timeout-minutes: 30
@@ -34,7 +39,7 @@ jobs:
 
   deploy:
     needs: build
-    timeout-minutes: 30
+    timeout-minutes: 10
     runs-on: ubuntu-latest
     permissions:
       pages: write
