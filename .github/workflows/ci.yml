@@ -16,6 +16,11 @@ on:
 
 permissions: {}
 
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  # Cancel superseded PR runs; never cancel a push-to-main run mid-release.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   changes:
     timeout-minutes: 5
