@@ -54,6 +54,23 @@
       "matchManagers": ["pip_requirements"],
       "matchPackageNames": ["pytest"],
       "groupName": "pytest (test infra)"
+    },
+    {
+      "description": "Group non-major bumps to the repo's own mise.toml into one 'dev tools' PR instead of one per tool. npm:renovate keeps its debounce schedule; Go toolchain bumps stay standalone.",
+      "matchManagers": ["mise"],
+      "matchFileNames": ["mise.toml"],
+      "matchUpdateTypes": ["minor", "patch", "digest", "pin"],
+      "matchDepNames": ["!npm:renovate"],
+      "matchDatasources": ["!golang-version"],
+      "groupName": "dev tools"
+    },
+    {
+      "description": "Same for template/mise.toml.jinja, kept a separate group so the batch stays `fix` (per the rule above) and cuts one go-tools release + one copier fan-out instead of one per tool.",
+      "matchManagers": ["mise"],
+      "matchFileNames": ["template/mise.toml.jinja"],
+      "matchUpdateTypes": ["minor", "patch", "digest", "pin"],
+      "matchDatasources": ["!golang-version"],
+      "groupName": "template dev tools"
     }
   ],
   "mise": {
