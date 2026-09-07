@@ -3,9 +3,11 @@
   "extends": [
     "config:recommended",
     "customManagers:githubActionsVersions",
+    "helpers:pinGitHubActionDigests",
     "github>hugoh/hk-config//renovate.json",
     ":automergeLinters",
     ":automergeMinor",
+    ":automergePatch",
     ":automergeDigest",
     "schedule:monthly",
     "github>hugoh/renovate-config//presets/vulnerability-alerts",
