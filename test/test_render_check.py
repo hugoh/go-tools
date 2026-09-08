@@ -106,6 +106,12 @@ def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
                 f"go-tools reusable workflow not hash+version pinned:\n{line}"
             )
 
+    # The Conventional-Commit PR-title check is unconditional: every repo
+    # from this template cuts a GitHub release from its commit history (cog
+    # bump, with or without goreleaser), so every one needs the gate.
+    if not (tmp_path / ".github" / "workflows" / "semantic-pr.yml").is_file():
+        failures.append(".github/workflows/semantic-pr.yml was not rendered")
+
     marker = "managed by hugoh/go-tools via copier"
     for path in sorted(tmp_path.rglob("*")):
         if not path.is_file() or ".git" in path.parts:
