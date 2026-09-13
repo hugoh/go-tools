@@ -146,4 +146,5 @@ jobs:
           fi
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}"
           git push origin "${TAG}"
-          gh release create "${TAG}" --generate-notes
+          cog changelog --at "${TAG}" > /tmp/release-notes.md
+          gh release create "${TAG}" --notes-file /tmp/release-notes.md
