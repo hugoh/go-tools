@@ -141,5 +141,6 @@ jobs:
           if [ "${{ inputs.has_goreleaser }}" = "true" ]; then
             goreleaser release --clean
           else
-            gh release create "${TAG}" --generate-notes
+            cog changelog --at "${TAG}" > /tmp/release-notes.md
+            gh release create "${TAG}" --notes-file /tmp/release-notes.md
           fi
