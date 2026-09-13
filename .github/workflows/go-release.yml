@@ -8,6 +8,10 @@ on:
         type: string
         default: "auto"
         description: "Version bump type: auto, patch, minor, or major"
+      has_goreleaser:
+        type: boolean
+        default: false
+        description: "Whether the calling repo ships a .goreleaser.yml to build/publish"
     secrets:
       gh_token:
         required: true
@@ -70,20 +74,22 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.gh_token }}
         run: |
-          set +e
-          out=$(goreleaser check 2>&1)
-          ec=$?
-          set -e
-          printf '%s\n' "$out"
-          if [ "$ec" -ne 0 ]; then
-            # goreleaser check fails even on configs it calls "valid" if
-            # they use a deprecated property (e.g. brews instead of
-            # homebrew_casks). Deprecation is a lint concern, not a
-            # validity one, so don't hard-fail the release on it.
-            if [ "$ec" -eq 2 ] && printf '%s\n' "$out" | grep -q 'configuration is valid, but uses deprecated properties'; then
-              :
-            else
-              exit "$ec"
+          if [ "${{ inputs.has_goreleaser }}" = "true" ]; then
+            set +e
+            out=$(goreleaser check 2>&1)
+            ec=$?
+            set -e
+            printf '%s\n' "$out"
+            if [ "$ec" -ne 0 ]; then
+              # goreleaser check fails even on configs it calls "valid" if
+              # they use a deprecated property (e.g. brews instead of
+              # homebrew_casks). Deprecation is a lint concern, not a
+              # validity one, so don't hard-fail the release on it.
+              if [ "$ec" -eq 2 ] && printf '%s\n' "$out" | grep -q 'configuration is valid, but uses deprecated properties'; then
+                :
+              else
+                exit "$ec"
+              fi
             fi
           fi
           if [ "${{ github.event_name }}" != "push" ] && [ "${{ github.event_name }}" != "workflow_dispatch" ]; then
@@ -132,4 +138,8 @@ jobs:
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}"
           git push origin "${TAG}"
           echo "Releasing ${TAG}"
-          goreleaser release --clean
+          if [ "${{ inputs.has_goreleaser }}" = "true" ]; then
+            goreleaser release --clean
+          else
+            gh release create "${TAG}" --generate-notes
+          fi

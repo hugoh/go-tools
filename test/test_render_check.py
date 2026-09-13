@@ -112,6 +112,32 @@ def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
     if not (tmp_path / ".github" / "workflows" / "semantic-pr.yml").is_file():
         failures.append(".github/workflows/semantic-pr.yml was not rendered")
 
+    # Every project - library or binary - gets an automatic semver tag and
+    # GitHub release from its conventional-commit history. Only binary
+    # projects (has_goreleaser: true) additionally build/publish artifacts.
+    # This regression-tests the bug where the whole release job, tagging
+    # included, was gated behind has_goreleaser: libraries went unreleased
+    # silently (no test failure) because nothing asserted the job existed.
+    expect_goreleaser = answers.get("has_goreleaser", False)
+    ci_jobs = yaml.safe_load(ci_yml).get("jobs", {})
+    release_job = ci_jobs.get("release")
+    if release_job is None:
+        failures.append("ci.yml has no 'release' job - releases would never be cut")
+    else:
+        got_has_goreleaser = release_job.get("with", {}).get("has_goreleaser")
+        if got_has_goreleaser != expect_goreleaser:
+            failures.append(
+                f"release job's has_goreleaser input is {got_has_goreleaser!r}, "
+                f"expected {expect_goreleaser!r}"
+            )
+
+    goreleaser_yml_exists = (tmp_path / ".goreleaser.yml").exists()
+    if goreleaser_yml_exists != expect_goreleaser:
+        failures.append(
+            f".goreleaser.yml existence ({goreleaser_yml_exists}) doesn't match "
+            f"has_goreleaser ({expect_goreleaser})",
+        )
+
     marker = "managed by hugoh/go-tools via copier"
     for path in sorted(tmp_path.rglob("*")):
         if not path.is_file() or ".git" in path.parts:

@@ -7,7 +7,6 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
-[%- if has_goreleaser %]
   workflow_dispatch:
     inputs:
       bump_type:
@@ -15,7 +14,6 @@ on:
         description: "Version bump type"
         default: auto
         options: [auto, patch, minor, major]
-[%- endif %]
 
 permissions: {}
 
@@ -44,8 +42,6 @@ jobs:
       pages_dir: "[[ pages_dir ]]"
 [%- endif %]
 
-[%- if has_goreleaser %]
-
   release:
     needs: [hk, goci]
     uses: hugoh/go-tools/.github/workflows/go-release.yml@[[ _copier_conf.vcs_ref_hash ]] # [[ _copier_answers['_commit'] ]]
@@ -53,7 +49,7 @@ jobs:
       contents: write
     with:
       bump_type: ${{ inputs.bump_type || 'auto' }}
+      has_goreleaser: [[ has_goreleaser | lower ]]
     secrets:
       gh_token: ${{ secrets.GITHUB_TOKEN }}
       tap_github_token: ${{ secrets.TAP_GITHUB_TOKEN }}
-[%- endif %]
