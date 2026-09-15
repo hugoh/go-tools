@@ -144,3 +144,24 @@ jobs:
             cog changelog --at "${TAG}" > /tmp/release-notes.md
             gh release create "${TAG}" --notes-file /tmp/release-notes.md
           fi
+      - name: Merge Homebrew tap PR
+        if: steps.validate.outputs.skip != 'true' && inputs.has_goreleaser == true
+        env:
+          TAP_GITHUB_TOKEN: ${{ secrets.tap_github_token }}
+          TAG: ${{ steps.validate.outputs.tag }}
+        run: |
+          if [ -z "${TAP_GITHUB_TOKEN:-}" ]; then
+            echo "No tap_github_token secret - this repo doesn't publish to the tap"
+            exit 0
+          fi
+          # goreleaser's pull_request.enabled defaults the branch name to
+          # {{.ProjectName}}-{{.Version}}; only repos with a `brews:`/
+          # `homebrew_casks:` block in .goreleaser.yml actually push one.
+          BRANCH="${GITHUB_REPOSITORY#*/}-${TAG#v}"
+          export GH_TOKEN="$TAP_GITHUB_TOKEN"
+          PR_URL=$(gh pr list --repo hugoh/homebrew-tap --head "$BRANCH" --state open --json url -q '.[0].url')
+          if [ -z "$PR_URL" ]; then
+            echo "No open homebrew-tap PR for branch ${BRANCH} - nothing to merge"
+            exit 0
+          fi
+          gh pr merge "$PR_URL" --repo hugoh/homebrew-tap --squash --delete-branch --auto
