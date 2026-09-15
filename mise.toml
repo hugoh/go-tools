@@ -21,6 +21,3 @@ ruff = "0.16.4"
 ty = "0.0.74"
 "npm:renovate" = { version = "44.79.6", trust_policy_excludes = ["*"] }
 cocogitto = "7.0.0"
-
-[settings]
-task.timings = false
