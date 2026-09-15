@@ -44,7 +44,7 @@ jobs:
               - 'template/**'
               - 'test/fixtures/**'
               - 'test/test_render_check.py'
-              - 'test/requirements-render-check.txt'
+              - 'test/render-check-requirements.txt'
               - 'mise-tasks/render-check'
               - 'copier.yml'
             renovate:
@@ -89,7 +89,7 @@ jobs:
           path: |
             ~/.pkl/cache
             ~/.cache/uv
-          key: render-check-${{ runner.os }}-${{ hashFiles('template/hk.pkl.jinja', 'test/requirements-render-check.txt') }}
+          key: render-check-${{ runner.os }}-${{ hashFiles('template/hk.pkl.jinja', 'test/render-check-requirements.txt') }}
           restore-keys: render-check-${{ runner.os }}-
       - name: Render check
         run: mise run render-check

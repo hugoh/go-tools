@@ -31,7 +31,7 @@ local linters = new Mapping<String, Step> {
   }
   ...Base.python
   ["ty"] = (Builtins.ty) {
-    check = "uv venv --quiet --clear --python 3.11 .cache/ty-venv && uv pip install --quiet --python .cache/ty-venv -r test/requirements-render-check.txt && uvx --with ty==0.0.57 ty check --python .cache/ty-venv {{files}}"
+    check = "uv venv --quiet --clear --python 3.11 .cache/ty-venv && uv pip install --quiet --python .cache/ty-venv -r test/render-check-requirements.txt && uvx --with ty==0.0.57 ty check --python .cache/ty-venv {{files}}"
   }
   ...Base.renovate
   // Split into its own profile (rather than "ci") so the main CI hk job
