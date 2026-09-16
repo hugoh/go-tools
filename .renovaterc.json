@@ -91,5 +91,12 @@
       "**/.rtx{,.*}.toml",
       "/^template/mise\\.toml\\.jinja$/"
     ]
+  },
+  "github-actions": {
+    "managerFilePatterns": [
+      "/^(workflow-templates|\\.(?:github|gitea)\\/(?:workflows|actions))\\/.+\\.ya?ml$/",
+      "/(^|\\/)action\\.ya?ml$/",
+      "/^template\\/\\.github\\/workflows\\/semantic-pr\\.yml\\.jinja$/"
+    ]
   }
 }
