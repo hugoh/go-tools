@@ -7,11 +7,9 @@
     "github>hugoh/hk-config//renovate.json",
     ":automergeLinters",
     ":automergeMinor",
-    ":automergePatch",
     ":automergeDigest",
     "schedule:monthly",
-    "github>hugoh/renovate-config//presets/vulnerability-alerts",
-    "github>hugoh/renovate-config//presets/major-updates-ungrouped"
+    "github>hugoh/renovate-config//presets/vulnerability-alerts"
   ],
   "minimumReleaseAge": "7 days",
   "packageRules": [
