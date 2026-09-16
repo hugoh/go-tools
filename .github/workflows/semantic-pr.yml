@@ -4,6 +4,7 @@ name: semantic-pr
 on: # yamllint disable-line rule:truthy
   pull_request:
     types: [opened, edited, reopened, synchronize]
+  workflow_call: {}
 
 permissions: {}
 

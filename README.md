@@ -6,11 +6,11 @@ Shared tooling for [hugoh](https://github.com/hugoh)'s Go project repositories (
 
 ## Copier template
 
-Templates the config files every Go repo carries: `.golangci.yml`, `.testcoverage.yml`, `cog.toml`, `biome.json`, `hk.pkl`, `.jscpd.json`, `.markdownlint.json`, `.renovaterc.json`, `.github/workflows/ci.yml`, and the `mise-tasks/` directory (mise [file tasks](https://mise.jdx.dev/tasks/#file-tasks): lint, test, build, ci, etc).
+Templates the config files every Go repo carries: `.golangci.yml`, `.testcoverage.yml`, `cog.toml`, `biome.json`, `hk.pkl`, `.jscpd.json`, `.markdownlint.json`, `.renovaterc.json`, `.github/workflows/ci.yml`, `.github/workflows/semantic-pr.yml`, and the `mise-tasks/` directory (mise [file tasks](https://mise.jdx.dev/tasks/#file-tasks): lint, test, build, ci, etc).
 
 `mise.toml` is templated too, and — like `hk.pkl` — is re-rendered on every `copier update`; it's not `_skip_if_exists`'d. `go-renovaterc.json` disables Renovate's `mise` manager for `mise.toml` in consumer repos so the two don't race to bump the same tool versions (see `hk.pkl`'s note below for the same pattern). mise automatically merges the `mise-tasks/` scripts in as tasks regardless of what's in `mise.toml`.
 
-A repo that needs a tool only in CI (not in the shared template, and not for local dev) can commit its own `mise.ci.toml` — a mise [environment-specific config file](https://mise.jdx.dev/configuration.html) that mise merges in automatically when `MISE_ENV=ci` is set, which the three reusable workflows below (`go-hk.yml`, `go-ci.yml`, `go-release.yml`) always set. `mise.ci.toml` is **not** Copier-managed — it's hand-maintained per repo, and `go-renovaterc.json` has an explicit `packageRule` keeping Renovate's `mise` manager enabled for it (unlike `mise.toml`) so its pins stay current on their own.
+A repo that needs a tool only in CI (not in the shared template, and not for local dev) can commit its own `mise.ci.toml` — a mise [environment-specific config file](https://mise.jdx.dev/configuration.html) that mise merges in automatically when `MISE_ENV=ci` is set, which the reusable workflows below (`go-hk.yml`, `go-ci.yml`, `go-release.yml`) always set. `mise.ci.toml` is **not** Copier-managed — it's hand-maintained per repo, and `go-renovaterc.json` has an explicit `packageRule` keeping Renovate's `mise` manager enabled for it (unlike `mise.toml`) so its pins stay current on their own.
 
 ### Bootstrapping a brand-new repo
 
@@ -32,7 +32,7 @@ Template updates are handled by **Renovate's built-in copier manager**. When a n
 
 `copier.yml` pins `_src_path` to the full `https://github.com/hugoh/go-tools.git` URL, which gets force-written into every consumer's `.copier-answers.yml` regardless of how `copier copy`/`copier update` was actually invoked. This works around a Renovate limitation: its copier manager passes `_src_path` straight to git as a remote, so Copier's `gh:owner/repo` shorthand (which Copier itself expands internally, but records unexpanded in `.copier-answers.yml`) isn't resolvable and silently breaks update detection ([renovatebot/renovate#39938](https://github.com/renovatebot/renovate/issues/39938) tracks adding `gh:`/`gl:` support upstream). Because of this pin, bootstrapping with `gh:hugoh/go-tools` (as shown above) is safe — the recorded source is corrected regardless.
 
-The three self-referential `hugoh/go-tools/...@<sha>` pins (`go-hk.yml`, `go-ci.yml`, `go-release.yml`) are managed exclusively by `copier update` — `go-renovaterc.json` disables Renovate's `github-actions` manager for `hugoh/go-tools` to prevent merge conflicts. Renovate manages every other action pin fleet-wide as usual.
+The self-referential `hugoh/go-tools/...@<sha>` pins in `ci.yml` (`go-hk.yml`, `go-ci.yml`, `go-release.yml`) and in `semantic-pr.yml` (itself — `semantic-pr.yml` is dual-purpose: go-tools' own PR-title trigger and the callable workflow consumers pin) are managed exclusively by `copier update` — `go-renovaterc.json` disables Renovate's `github-actions` manager for `hugoh/go-tools` in both files to prevent merge conflicts. Renovate manages every other action pin fleet-wide as usual.
 
 The `hk-config` Pkl package pin in `hk.pkl` follows the same rule: consumer repos' `hk.pkl` is a Copier output, re-rendered on every `copier update`, so it must only change via that same template-update PR — never via a direct in-place edit that would then conflict with the next `copier update`'s merge. That's why `go-renovaterc.json` (the **shared** preset consumer repos extend) deliberately does **not** extend `hugoh/hk-config`'s own Renovate config, unlike every other hugoh repo. The pin only moves once `template/hk.pkl.jinja`'s own copy of it is bumped and a new `go-tools` release/commit lands, at which point the existing "always automerge template updates" `packageRule` above picks it up like any other template change.
 
@@ -50,11 +50,12 @@ See `copier.yml` in this repo for the full list of variables (coverage threshold
 
 ## Reusable workflows
 
-Referenced automatically by the templated `.github/workflows/ci.yml` via `uses:`. Not meant to be used directly, but documented here for completeness:
+Referenced automatically by the templated `.github/workflows/ci.yml` and `.github/workflows/semantic-pr.yml` via `uses:`. Not meant to be used directly, but documented here for completeness:
 
 - `go-hk.yml` — runs `hk check` (lint/format/security checks via mise+hk).
 - `go-ci.yml` — runs `mise ci` (build, test, coverage).
 - `go-release.yml` — cocogitto version bump + goreleaser release, triggered by a tag push (or dry-run validated on PRs).
+- `semantic-pr.yml` — go-tools' own PR-title workflow doubles as the callable one: it carries both a `pull_request` trigger (for go-tools itself) and a `workflow_call` trigger (for consumers), and wraps `hugoh/gh-workflows`'s `semantic-pr.yml`.
 - `go-tool-compat.yml` — runs a repo's integration tests against the newest few version series of a mise tool (version list via `hugoh/gh-workflows/mise-latest-versions`). **Opt-in**, not wired by the template — used by `hrd` and `jj-trim`, which exec a real `jj`. Add a caller workflow with its own triggers:
 
   ```yaml
