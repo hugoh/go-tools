@@ -1,0 +1,14 @@
+project_name: gh-bulk-pr
+has_goreleaser: true
+package_format: binary
+project_description: "Bulk-edit GitHub pull requests (label, reviewer, close, merge) from the terminal"
+goreleaser_version_pkg: "main"
+has_test_int: false
+has_gen: false
+has_fuzz: false
+golangci_extra_disable: []
+golangci_test_exclude_linters: [funlen]
+golangci_extra_exclusions: []
+coverage_total: 90
+testcoverage_overrides: []
+testcoverage_excludes: ["^main\\.go$"]

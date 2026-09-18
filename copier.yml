@@ -35,6 +35,16 @@ goreleaser_version_pkg:
   help: "Go package path whose 'version' var gets ldflags-injected (e.g. main, github.com/hugoh/hrd/cmd)"
   when: "[[ has_goreleaser ]]"
 
+package_format:
+  type: str
+  default: "nfpm"
+  choices: ["nfpm", "binary"]
+  help: >-
+    nfpm builds deb/rpm packages; binary publishes raw
+    <project>-<os>-<arch> archives (e.g. for a `gh` CLI extension) and skips
+    the goarm build matrix
+  when: "[[ has_goreleaser ]]"
+
 has_homebrew_cask:
   type: bool
   default: false
