@@ -22,9 +22,11 @@ builds:
       - arm64
       - "386"
       - arm
+[%- if package_format == "nfpm" %]
     goarm:
       - "6"
       - "7"
+[%- endif %]
     ignore:
       - goos: darwin
         goarch: "386"
@@ -41,6 +43,7 @@ builds:
       - -s -w
       - -X [[ goreleaser_version_pkg ]].version={{.Version}}
 
+[%- if package_format == "nfpm" %]
 nfpms:
   - maintainer: "Hugo Haas <hugoh@hugoh.net>"
     description: "[[ project_description ]]"
@@ -56,6 +59,11 @@ nfpms:
       - src: [[ c.src ]]
         dst: [[ c.dst ]]
 [%- endfor %]
+[%- endif %]
+[%- else %]
+archives:
+  - format: binary
+    name_template: "[[ project_name ]]-{{ .Os }}-{{ .Arch }}"
 [%- endif %]
 [%- if has_homebrew_cask %]
 

@@ -138,6 +138,21 @@ def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
             f"has_goreleaser ({expect_goreleaser})",
         )
 
+    # package_format: binary is for gh extensions, which publish raw
+    # per-platform binaries instead of deb/rpm packages - regression-tests
+    # that the two block types never both appear (or both go missing).
+    if goreleaser_yml_exists:
+        goreleaser_yml = yaml.safe_load((tmp_path / ".goreleaser.yml").read_text())
+        expect_binary = answers.get("package_format", "nfpm") == "binary"
+        has_archives = goreleaser_yml.get("archives") is not None
+        has_nfpms = goreleaser_yml.get("nfpms") is not None
+        if has_archives != expect_binary or has_nfpms == expect_binary:
+            failures.append(
+                f".goreleaser.yml archives/nfpms blocks don't match "
+                f"package_format=binary ({expect_binary}): "
+                f"archives={has_archives}, nfpms={has_nfpms}"
+            )
+
     marker = "managed by hugoh/go-tools via copier"
     for path in sorted(tmp_path.rglob("*")):
         if not path.is_file() or ".git" in path.parts:
