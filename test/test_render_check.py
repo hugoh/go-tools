@@ -153,6 +153,13 @@ def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
                 f"archives={has_archives}, nfpms={has_nfpms}"
             )
 
+    if goreleaser_yml_exists:
+        for archive in goreleaser_yml.get("archives") or []:
+            if "format" in archive:
+                failures.append(
+                    ".goreleaser.yml archives use deprecated 'format'; use 'formats'"
+                )
+
     marker = "managed by hugoh/go-tools via copier"
     for path in sorted(tmp_path.rglob("*")):
         if not path.is_file() or ".git" in path.parts:

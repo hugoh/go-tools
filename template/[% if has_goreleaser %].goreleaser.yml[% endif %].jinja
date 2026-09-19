@@ -62,7 +62,7 @@ nfpms:
 [%- endif %]
 [%- else %]
 archives:
-  - format: binary
+  - formats: [binary]
     name_template: "[[ project_name ]]-{{ .Os }}-{{ .Arch }}"
 [%- endif %]
 [%- if has_homebrew_cask %]
