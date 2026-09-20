@@ -43,6 +43,12 @@
       "matchManagers": ["mise"],
       "matchFileNames": ["mise.ci.toml"],
       "enabled": true
+    },
+    {
+      "description": "A consumer's mise-managed Go toolchain version can carry security/bug fixes, so tag its bump `fix` (not the default `chore`) so cocogitto's `cog bump --auto` cuts a patch release — matching how go-tools already forces `fix` for its own template/mise.toml.jinja Go pin.",
+      "matchManagers": ["mise"],
+      "matchDatasources": ["golang-version"],
+      "semanticCommitType": "fix"
     }
   ],
   "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths"]
