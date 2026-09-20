@@ -33,8 +33,8 @@ jobs:
     outputs:
       matrix: ${{ steps.pick.outputs.matrix }}
     steps:
-      - uses: hugoh/gh-workflows/setup@590f4d47fd56774ed9ad0e4e9781c78b03c183cc # v1.15.0
-      - uses: hugoh/gh-workflows/mise-latest-versions@590f4d47fd56774ed9ad0e4e9781c78b03c183cc # v1.15.0
+      - uses: hugoh/gh-workflows/setup@b95b3bd62a98e3c18adbd6ed7e22f50908a50467 # v1.40.1
+      - uses: hugoh/gh-workflows/mise-latest-versions@b95b3bd62a98e3c18adbd6ed7e22f50908a50467 # v1.40.1
         id: pick
         with:
           tool: ${{ inputs.tool }}
@@ -52,7 +52,7 @@ jobs:
       matrix:
         version: ${{ fromJSON(needs.versions.outputs.matrix) }}
     steps:
-      - uses: hugoh/gh-workflows/setup@590f4d47fd56774ed9ad0e4e9781c78b03c183cc # v1.15.0
+      - uses: hugoh/gh-workflows/setup@b95b3bd62a98e3c18adbd6ed7e22f50908a50467 # v1.40.1
       # No MISE_ENV=ci: a repo's mise.ci.toml pins the tool (e.g. jj) too, and
       # an env-specific config outranks the `mise use` below — which would
       # silently defeat the matrix.
