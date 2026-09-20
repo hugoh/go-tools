@@ -11,6 +11,7 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
@@ -20,6 +21,7 @@ import copier
 import pytest
 import tomllib
 import yaml
+from plumbum import local
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -241,8 +243,16 @@ def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
 
         # Only has_goreleaser varies the rendered [tools] table across
         # cases - every other tool pin is unconditional - so most cases
-        # share byte-identical mise.toml content.
-        return cached_check("mise-install", [tmp_path / "mise.toml"], do_install)
+        # share byte-identical mise.toml content. go.toml lives outside
+        # mise.toml but still feeds `mise install`, so it's part of the key.
+        return cached_check(
+            "mise-install",
+            [
+                tmp_path / "mise.toml",
+                tmp_path / ".config" / "mise" / "conf.d" / "go.toml",
+            ],
+            do_install,
+        )
 
     checks = {
         "shellcheck": lambda: cached_check(
@@ -346,3 +356,113 @@ def test_mise_toml_jinja_is_raw_toml():
             f"{e}",
             pytrace=False,
         )
+
+
+GO_TOML = Path(".config") / "mise" / "conf.d" / "go.toml"
+
+
+def go_version(project_dir):
+    return tomllib.loads((project_dir / GO_TOML).read_text())["tools"]["go"]
+
+
+def git(cwd, *args):
+    subprocess.run(["git", *args], cwd=cwd, check=True, capture_output=True)
+
+
+def commit_all(cwd, message):
+    git(cwd, "add", "-A")
+    git(cwd, "commit", "-q", "-m", message)
+
+
+HERMETIC_GIT_ENV = {
+    "GIT_CONFIG_GLOBAL": os.devnull,
+    "GIT_CONFIG_SYSTEM": os.devnull,
+    "GIT_AUTHOR_NAME": "test",
+    "GIT_AUTHOR_EMAIL": "test@example.com",
+    "GIT_COMMITTER_NAME": "test",
+    "GIT_COMMITTER_EMAIL": "test@example.com",
+}
+
+
+@pytest.fixture
+def hermetic_git(monkeypatch):
+    """Keep the developer's global git config (identity, core.hooksPath's hk
+    pre-commit hook, ...) out of the throwaway repos, including the temp
+    commits `copier update` makes itself. plumbum snapshots os.environ at
+    import, so copier's git calls only see it through `local.env`."""
+    for key, value in HERMETIC_GIT_ENV.items():
+        monkeypatch.setenv(key, value)
+    with local.env(**HERMETIC_GIT_ENV):
+        yield
+
+
+@pytest.mark.parametrize("template_reseeds_go", [False, True])
+@pytest.mark.usefixtures("hermetic_git")
+def test_copier_update_keeps_renovate_go_bump(template_reseeds_go, tmp_path):
+    """A Go bump committed in a consumer must survive `copier update`.
+
+    .config/mise/conf.d/go.toml is Renovate-owned in consumer repos and only
+    seeded by the template (`_skip_if_exists`). Copier's update is diff-based,
+    so this also covers the template later bumping its own seed value.
+    """
+    template = tmp_path / "template-repo"
+    template.mkdir()
+    shutil.copy(ROOT / "copier.yml", template / "copier.yml")
+    shutil.copytree(ROOT / "template", template / "template")
+    copier_yml = template / "copier.yml"
+    # copier.yml pins _src_path to the GitHub URL; `copier update` would
+    # otherwise clone that instead of this local template repo.
+    copier_yml.write_text(
+        re.sub(r"(?m)^_src_path: .*$", f"_src_path: {template}", copier_yml.read_text())
+    )
+    git(template, "init", "-q")
+    commit_all(template, "v1")
+    git(template, "tag", "v1.0.0")
+
+    project = tmp_path / "project"
+    copier.run_copy(
+        str(template),
+        str(project),
+        data={"project_name": "sticky"},
+        vcs_ref="v1.0.0",
+        defaults=True,
+        unsafe=True,
+        quiet=True,
+    )
+    git(project, "init", "-q")
+    commit_all(project, "copier copy")
+
+    seeded = go_version(project)
+    renovate_bump = "1.99.0"
+    assert seeded != renovate_bump
+    go_toml = project / GO_TOML
+    go_toml.write_text(go_toml.read_text().replace(seeded, renovate_bump))
+    commit_all(project, "renovate: bump go")
+
+    mise_toml = template / "template" / "mise.toml.jinja"
+    mise_toml.write_text(
+        mise_toml.read_text().replace('golangci-lint = "', 'golangci-lint = "9.', 1)
+    )
+    if template_reseeds_go:
+        template_go_toml = template / "template" / GO_TOML
+        template_go_toml.write_text(
+            template_go_toml.read_text().replace(seeded, "1.28.0")
+        )
+    commit_all(template, "v2")
+    git(template, "tag", "v2.0.0")
+
+    copier.run_update(
+        str(project),
+        vcs_ref="v2.0.0",
+        defaults=True,
+        overwrite=True,
+        unsafe=True,
+        quiet=True,
+    )
+
+    assert 'golangci-lint = "9.' in (project / "mise.toml").read_text(), (
+        "update didn't apply the new template version at all"
+    )
+    assert "<<<<<<<" not in go_toml.read_text(), "update conflicted on go.toml"
+    assert not list(project.rglob("*.rej"))
+    assert go_version(project) == renovate_bump
