@@ -33,22 +33,18 @@
       "enabled": false
     },
     {
+      "description": "A go-tools release only reaches a consumer via this Copier-update PR, and go-tools already gates its own releases to fix-worthy template changes (Go toolchain, other mise tool pins, pinned actions). Force `fix` (not the default `chore`) so the fan-out itself also cuts a patch release in the consumer, instead of silently landing as a no-op commit.",
       "matchManagers": ["copier"],
       "matchPackageNames": ["https://github.com/hugoh/go-tools.git"],
       "extends": ["github>hugoh/renovate-config//presets/chain-debounce"],
-      "automerge": true
+      "automerge": true,
+      "semanticCommitType": "fix"
     },
     {
       "description": "mise.ci.toml is NOT Copier-managed (only repos that commit it directly, e.g. for CI-only tools like jj) — let Renovate bump it normally.",
       "matchManagers": ["mise"],
       "matchFileNames": ["mise.ci.toml"],
       "enabled": true
-    },
-    {
-      "description": "A consumer's mise-managed Go toolchain version can carry security/bug fixes, so tag its bump `fix` (not the default `chore`) so cocogitto's `cog bump --auto` cuts a patch release — matching how go-tools already forces `fix` for its own template/mise.toml.jinja Go pin.",
-      "matchManagers": ["mise"],
-      "matchDatasources": ["golang-version"],
-      "semanticCommitType": "fix"
     }
   ],
   "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths"]
