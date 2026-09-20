@@ -241,8 +241,13 @@ def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
 
         # Only has_goreleaser varies the rendered [tools] table across
         # cases - every other tool pin is unconditional - so most cases
-        # share byte-identical mise.toml content.
-        return cached_check("mise-install", [tmp_path / "mise.toml"], do_install)
+        # share byte-identical mise.toml content. go.toml lives outside
+        # mise.toml but still feeds `mise install`, so it's part of the key.
+        return cached_check(
+            "mise-install",
+            [tmp_path / "mise.toml", tmp_path / ".config" / "mise" / "conf.d" / "go.toml"],
+            do_install,
+        )
 
     checks = {
         "shellcheck": lambda: cached_check(

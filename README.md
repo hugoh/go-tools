@@ -10,6 +10,8 @@ Templates the config files every Go repo carries: `.golangci.yml`, `.testcoverag
 
 `mise.toml` is templated too, and — like `hk.pkl` — is re-rendered on every `copier update`; it's not `_skip_if_exists`'d. `go-renovaterc.json` disables Renovate's `mise` manager for `mise.toml` in consumer repos so the two don't race to bump the same tool versions (see `hk.pkl`'s note below for the same pattern). mise automatically merges the `mise-tasks/` scripts in as tasks regardless of what's in `mise.toml`.
 
+The Go toolchain version is the one exception: it lives in `.config/mise/conf.d/go.toml` (which mise merges in automatically), seeded once from the template and then `_skip_if_exists`'d, so Copier never re-renders it. Renovate owns it there directly and tags its bumps `fix` (see `go-renovaterc.json`), so a Go version bump cuts its own patch release in the consumer repo — independent of go-tools' release cadence and not bundled with unrelated `mise.toml` tool bumps that only fan out via `copier update`.
+
 A repo that needs a tool only in CI (not in the shared template, and not for local dev) can commit its own `mise.ci.toml` — a mise [environment-specific config file](https://mise.jdx.dev/configuration.html) that mise merges in automatically when `MISE_ENV=ci` is set, which the reusable workflows below (`go-hk.yml`, `go-ci.yml`, `go-release.yml`) always set. `mise.ci.toml` is **not** Copier-managed — it's hand-maintained per repo, and `go-renovaterc.json` has an explicit `packageRule` keeping Renovate's `mise` manager enabled for it (unlike `mise.toml`) so its pins stay current on their own.
 
 ### Bootstrapping a brand-new repo

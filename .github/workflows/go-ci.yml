@@ -23,7 +23,7 @@ jobs:
       - name: Get Go version
         id: go-version
         run: |
-          GO_VERSION=$(grep '^go ' mise.toml | sed 's/.*"\(.*\)"/\1/')
+          GO_VERSION=$(grep -h '^go ' mise.toml .config/mise/conf.d/*.toml 2>/dev/null | head -1 | sed 's/.*"\(.*\)"/\1/')
           echo "go=${GO_VERSION}" >> "$GITHUB_OUTPUT"
       - name: Cache Go modules
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0

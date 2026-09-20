@@ -13,6 +13,11 @@ _envops:
   block_end_string: "%]"
   variable_start_string: "[["
   variable_end_string: "]]"
+# .config/mise/conf.d/go.toml is seeded once from the template and then left
+# alone forever, so Renovate can own Go version bumps in consumer repos
+# directly instead of via the mise.toml fan-out (see the go-tools README).
+_skip_if_exists:
+  - .config/mise/conf.d/go.toml
 
 project_name:
   type: str

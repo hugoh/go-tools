@@ -45,6 +45,13 @@
       "matchManagers": ["mise"],
       "matchFileNames": ["mise.ci.toml"],
       "enabled": true
+    },
+    {
+      "description": "Unlike mise.toml, .config/mise/conf.d/go.toml is only Copier-seeded once (_skip_if_exists) and Renovate owns Go version bumps there directly afterward. Tag those bumps `fix` (not the default `chore`) since a Go toolchain bump can carry security/bug fixes, so cocogitto's `cog bump --auto` cuts a patch release for it on its own — independent of go-tools' own release cadence and not bundled with unrelated copier updates.",
+      "matchManagers": ["mise"],
+      "matchFileNames": [".config/mise/conf.d/go.toml"],
+      "matchDatasources": ["golang-version"],
+      "semanticCommitType": "fix"
     }
   ],
   "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths"]
