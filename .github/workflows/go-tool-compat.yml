@@ -56,6 +56,11 @@ jobs:
       # No MISE_ENV=ci: a repo's mise.ci.toml pins the tool (e.g. jj) too, and
       # an env-specific config outranks the `mise use` below — which would
       # silently defeat the matrix.
+      #
+      # The swept version installed by `mise use` below runs after setup's
+      # mise cache is saved, so it's deliberately never cached: the version
+      # matrix churns release-to-release, so caching it would mostly add
+      # single-use entries against the repo's cache budget.
       - name: ${{ inputs.tool }} ${{ matrix.version }} — ${{ inputs.test-target }}
         env:
           TOOL: ${{ inputs.tool }}
