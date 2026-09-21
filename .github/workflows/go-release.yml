@@ -37,31 +37,16 @@ jobs:
     env:
       MISE_ENV: ci
     steps:
-      - name: Checkout code with full history
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # go, goreleaser (when has_goreleaser) and cocogitto all come from the
+      # calling repo's own mise.toml — every repo built from this template
+      # already declares them (template/mise.toml.jinja,
+      # template/.config/mise/conf.d/go.toml) — so no install_args needed.
+      - name: Setup
+        uses: hugoh/gh-workflows/setup@b95b3bd62a98e3c18adbd6ed7e22f50908a50467 # v1.40.1
         with:
-          persist-credentials: false
-          fetch-depth: 0
-      - name: Setup mise
-        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
-        with:
-          install_args: go goreleaser
-      - name: Get Go version
-        if: inputs.has_goreleaser
-        id: go-version
-        run: |
-          GO_VERSION=$(mise current go)
-          echo "go=${GO_VERSION:?mise current go returned nothing}" >> "$GITHUB_OUTPUT"
-      - name: Cache Go modules
-        if: inputs.has_goreleaser
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: |
-            ~/go/pkg/mod
-            ~/.cache/go-build
-          key: ${{ runner.os }}-go-${{ steps.go-version.outputs.go }}-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-${{ steps.go-version.outputs.go }}-
+          fetch-depth: "0"
+      - if: inputs.has_goreleaser
+        uses: $/go-mod-cache
       - name: Guard manual dispatch to main
         if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'
         env:
@@ -69,17 +54,14 @@ jobs:
         run: |
           echo "::error::Manual bump_type dispatch must run on main (got ${GITHUB_REF})"
           exit 1
-      - name: Install cog
-        if: github.event_name == 'pull_request'
-        uses: cocogitto/cocogitto-action@52d0023b4396897f1815648e553db2ab8d782f3a # v4.2.0
-        with:
-          install-only: true
       - name: Semver release
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-        uses: cocogitto/cocogitto-action@52d0023b4396897f1815648e553db2ab8d782f3a # v4.2.0
-        with:
-          command: bump
-          args: ${{ inputs.bump_type == 'auto' && '--auto' || format('--{0}', inputs.bump_type) }}
+        env:
+          BUMP_ARGS: ${{ inputs.bump_type == 'auto' && '--auto' || format('--{0}', inputs.bump_type) }}
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          cog bump $BUMP_ARGS
       - name: Validate release
         id: validate
         env:
