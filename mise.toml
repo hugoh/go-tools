@@ -19,5 +19,5 @@ goreleaser = "2.18.0"
 golangci-lint = "2.13.2"
 ruff = "0.16.4"
 ty = "0.0.74"
-"npm:renovate" = { version = "44.97.4", trust_policy_excludes = ["*"] }
+"npm:renovate" = { version = "44.103.1", trust_policy_excludes = ["*"] }
 cocogitto = "7.0.0"
