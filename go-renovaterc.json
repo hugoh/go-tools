@@ -2,16 +2,20 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended",
+    ":configMigration",
+    "abandonments:recommended",
+    "security:gomodIndirectSecurityUpdates",
     "customManagers:githubActionsVersions",
     "helpers:pinGitHubActionDigests",
     "github>hugoh/hk-config//renovate.json",
     ":automergeLinters",
     ":automergeMinor",
     ":automergeDigest",
-    "schedule:monthly",
+    "github>hugoh/renovate-config//presets/monthly",
     "github>hugoh/renovate-config//presets/vulnerability-alerts"
   ],
   "minimumReleaseAge": "7 days",
+  "osvVulnerabilityAlerts": true,
   "packageRules": [
     {
       "matchManagers": ["github-actions"],
