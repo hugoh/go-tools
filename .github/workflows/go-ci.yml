@@ -16,7 +16,7 @@ jobs:
     env:
       MISE_ENV: ci
     steps:
-      - uses: hugoh/gh-workflows/setup@b95b3bd62a98e3c18adbd6ed7e22f50908a50467 # v1.40.1
+      - uses: hugoh/gh-workflows/setup@7cbb8fcf3a59c29229d6fd9feb02e46e0a02113a # v1.40.3
       - uses: $/go-mod-cache
       - name: Mise CI
         run: mise ci
