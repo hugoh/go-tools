@@ -11,7 +11,7 @@
     ":automergeLinters",
     ":automergeMinor",
     ":automergeDigest",
-    "schedule:monthly",
+    "github>hugoh/renovate-config//presets/monthly",
     "github>hugoh/renovate-config//presets/vulnerability-alerts"
   ],
   "minimumReleaseAge": "7 days",
