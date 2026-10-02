@@ -43,6 +43,13 @@
       "versioningTemplate": "semver"
     }
   ],
+  "github-actions": {
+    "managerFilePatterns": [
+      "/(^|/)(workflow-templates|\\.(?:github|gitea|forgejo)/(?:workflows|actions))/.+\\.ya?ml$/",
+      "/(^|/)action\\.ya?ml$/",
+      "/^template/\\.github/workflows/semantic-pr\\.yml\\.jinja$/"
+    ]
+  },
   "ignorePaths": [
     "**/node_modules/**",
     "**/bower_components/**",
@@ -53,10 +60,20 @@
   ],
   "packageRules": [
     {
-      "description": "These reusable/callable workflows are uses:-pinned by commit hash via copier update (or direct opt-in) in every consumer repo — a bump here only reaches consumers once go-tools cuts a new tag, so force fix (not chore) to make cocogitto's `cog bump --auto` release it. go-tools' own ci.yml is excluded: it's never consumed externally, so its own action bumps don't need a release. semantic-pr.yml is both: it's go-tools' own PR-title trigger AND the callable workflow consumers pin, so it's included here rather than excluded like ci.yml.",
+      "description": "These pins reach consumers only once go-tools cuts a new tag (go-*.yml via copier update's uses: hash pins, the template's semantic-pr.yml.jinja via its own gh-workflows pin), so force fix (not chore) to make cocogitto's `cog bump --auto` release them. go-tools' own ci.yml and semantic-pr.yml are excluded: they're never consumed externally.",
       "matchManagers": ["github-actions"],
-      "matchFileNames": ["go-*.yml", "semantic-pr.yml"],
+      "matchFileNames": [
+        "go-*.yml",
+        "template/.github/workflows/semantic-pr.yml.jinja"
+      ],
       "semanticCommitType": "fix"
+    },
+    {
+      "description": "The shared preset disables hugoh/gh-workflows bumps in semantic-pr.yml for consumers (Copier-owned there); go-tools' own copy is the one place Renovate must keep it current.",
+      "matchManagers": ["github-actions"],
+      "matchPackageNames": ["hugoh/gh-workflows"],
+      "matchFileNames": [".github/workflows/semantic-pr.yml"],
+      "enabled": true
     },
     {
       "description": "Same reasoning as above: template/mise.toml.jinja's tool pins only reach consumers via a new go-tools tag.",
