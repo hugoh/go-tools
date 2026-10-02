@@ -29,6 +29,18 @@
       "packageNameTemplate": "jdx/hk",
       "extractVersionTemplate": "^v?(?<version>.*)$",
       "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "description": "Bump the jdx/hk pin in the Copier template's mise.toml.jinja (hk-config's manager only matches files named mise.toml, and the built-in mise manager is disabled for hk)",
+      "managerFilePatterns": ["/^template/mise\\.toml\\.jinja$/"],
+      "matchStrings": [
+        "(?:^|\\r\\n|\\r|\\n)hk\\s*=\\s*\"(?<currentValue>[^\"]+)\"\\s*(?:\\r\\n|\\r|\\n|$)"
+      ],
+      "datasourceTemplate": "github-releases",
+      "packageNameTemplate": "jdx/hk",
+      "extractVersionTemplate": "^v?(?<version>.*)$",
+      "versioningTemplate": "semver"
     }
   ],
   "ignorePaths": [
@@ -53,9 +65,9 @@
       "semanticCommitType": "fix"
     },
     {
-      "description": "Same reasoning as above: template/hk.pkl.jinja's hk-config/jdx-hk pins only reach consumers via a new go-tools tag.",
+      "description": "Same reasoning as above: template/hk.pkl.jinja's and template/mise.toml.jinja's hk-config/jdx-hk pins only reach consumers via a new go-tools tag.",
       "matchManagers": ["custom.regex"],
-      "matchFileNames": ["template/hk.pkl.jinja"],
+      "matchFileNames": ["template/hk.pkl.jinja", "template/mise.toml.jinja"],
       "semanticCommitType": "fix"
     },
     {
