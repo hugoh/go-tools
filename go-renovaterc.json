@@ -7,14 +7,11 @@
     "security:gomodIndirectSecurityUpdates",
     "customManagers:githubActionsVersions",
     "helpers:pinGitHubActionDigests",
-    "github>hugoh/hk-config//renovate.json",
     ":automergeLinters",
     ":automergeMinor",
     ":automergeDigest",
-    "github>hugoh/renovate-config//presets/monthly",
-    "github>hugoh/renovate-config//presets/vulnerability-alerts"
+    "github>hugoh/renovate-config//presets/base"
   ],
-  "minimumReleaseAge": "7 days",
   "osvVulnerabilityAlerts": true,
   "packageRules": [
     {
@@ -37,10 +34,13 @@
       "enabled": false
     },
     {
-      "description": "A go-tools release only reaches a consumer via this Copier-update PR, and go-tools already gates its own releases to fix-worthy template changes (Go toolchain, other mise tool pins, pinned actions). Force `fix` (not the default `chore`) so the fan-out itself also cuts a patch release in the consumer, instead of silently landing as a no-op commit.",
+      "description": "A go-tools release only reaches a consumer via this Copier-update PR, and go-tools already gates its own releases to fix-worthy template changes (Go toolchain, other mise tool pins, pinned actions). Force `fix` (not the default `chore`) so the fan-out itself also cuts a patch release in the consumer, instead of silently landing as a no-op commit. First-party, so it takes the 1-day soak: go-tools releases several times a day, and the 7-day third-party soak kept restarting, so the copier PR never matured.",
       "matchManagers": ["copier"],
       "matchPackageNames": ["https://github.com/hugoh/go-tools.git"],
-      "extends": ["github>hugoh/renovate-config//presets/chain-debounce"],
+      "extends": [
+        "github>hugoh/renovate-config//presets/chain-debounce",
+        "github>hugoh/renovate-config//presets/first-party-soak"
+      ],
       "automerge": true,
       "semanticCommitType": "fix"
     },
