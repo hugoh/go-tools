@@ -34,7 +34,9 @@ Template updates are handled by **Renovate's built-in copier manager**. When a n
 
 `copier.yml` pins `_src_path` to the full `https://github.com/hugoh/go-tools.git` URL, which gets force-written into every consumer's `.copier-answers.yml` regardless of how `copier copy`/`copier update` was actually invoked. This works around a Renovate limitation: its copier manager passes `_src_path` straight to git as a remote, so Copier's `gh:owner/repo` shorthand (which Copier itself expands internally, but records unexpanded in `.copier-answers.yml`) isn't resolvable and silently breaks update detection ([renovatebot/renovate#39938](https://github.com/renovatebot/renovate/issues/39938) tracks adding `gh:`/`gl:` support upstream). Because of this pin, bootstrapping with `gh:hugoh/go-tools` (as shown above) is safe — the recorded source is corrected regardless.
 
-The self-referential `hugoh/go-tools/...@<sha>` pins in `ci.yml` (`go-hk.yml`, `go-ci.yml`, `go-release.yml`) and in `semantic-pr.yml` (itself — `semantic-pr.yml` is dual-purpose: go-tools' own PR-title trigger and the callable workflow consumers pin) are managed exclusively by `copier update` — `go-renovaterc.json` disables Renovate's `github-actions` manager for `hugoh/go-tools` in both files to prevent merge conflicts. Renovate manages every other action pin fleet-wide as usual.
+The self-referential `hugoh/go-tools/...@<sha>` pins in `ci.yml` (`go-hk.yml`, `go-ci.yml`, `go-release.yml`) and the `hugoh/gh-workflows/...@<sha>` pin in `semantic-pr.yml` are managed exclusively by `copier update` — `go-renovaterc.json` disables Renovate's `github-actions` manager for them in those files to prevent merge conflicts. The `semantic-pr.yml` pin is kept current in go-tools itself (the template file `template/.github/workflows/semantic-pr.yml.jinja` is scanned by Renovate) and reaches consumers with the next release. Renovate manages every other action pin fleet-wide as usual.
+
+`semantic-pr.yml` calls `hugoh/gh-workflows` directly rather than through a go-tools wrapper workflow: every extra `uses:` hop adds a segment to the check name (`semantic-pr / semantic-pr` → `semantic-pr / semantic-pr / semantic-pr`), which would no longer match the required status check in consumers' branch protection. `render-check` fails if a go-tools reusable workflow forwards to another reusable workflow.
 
 The `hk-config` Pkl package pin in `hk.pkl` follows the same rule: consumer repos' `hk.pkl` is a Copier output, re-rendered on every `copier update`, so it must only change via that same template-update PR — never via a direct in-place edit that would then conflict with the next `copier update`'s merge. That's why `go-renovaterc.json` (the **shared** preset consumer repos extend) deliberately does **not** extend `hugoh/hk-config`'s own Renovate config, unlike every other hugoh repo. The pin only moves once `template/hk.pkl.jinja`'s own copy of it is bumped and a new `go-tools` release/commit lands, at which point the existing "always automerge template updates" `packageRule` above picks it up like any other template change.
 
@@ -52,12 +54,11 @@ See `copier.yml` in this repo for the full list of variables (coverage threshold
 
 ## Reusable workflows
 
-Referenced automatically by the templated `.github/workflows/ci.yml` and `.github/workflows/semantic-pr.yml` via `uses:`. Not meant to be used directly, but documented here for completeness:
+Referenced automatically by the templated `.github/workflows/ci.yml` via `uses:`. Not meant to be used directly, but documented here for completeness:
 
 - `go-hk.yml` — runs `hk check` (lint/format/security checks via mise+hk).
 - `go-ci.yml` — runs `mise ci` (build, test, coverage).
 - `go-release.yml` — cocogitto version bump + goreleaser release, triggered by a tag push (or dry-run validated on PRs).
-- `semantic-pr.yml` — go-tools' own PR-title workflow doubles as the callable one: it carries both a `pull_request` trigger (for go-tools itself) and a `workflow_call` trigger (for consumers), and wraps `hugoh/gh-workflows`'s `semantic-pr.yml`.
 - `go-tool-compat.yml` — runs a repo's integration tests against the newest few version series of a mise tool (version list via `hugoh/gh-workflows/mise-latest-versions`). **Opt-in**, not wired by the template — used by `hrd` and `jj-trim`, which exec a real `jj`. Add a caller workflow with its own triggers:
 
   ```yaml

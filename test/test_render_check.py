@@ -108,6 +108,29 @@ def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
                 f"go-tools reusable workflow not hash+version pinned:\n{line}"
             )
 
+    # A required check is named `<caller job> / <callee job>`; one more
+    # `uses:` hop adds a segment and renames the check, which silently
+    # blocks every consumer PR whose branch protection requires the old name.
+    # So a go-tools workflow a consumer calls must hold real jobs, not
+    # forward to yet another reusable workflow.
+    for workflow in sorted((tmp_path / ".github" / "workflows").glob("*.yml")):
+        for job_id, job in yaml.safe_load(workflow.read_text()).get("jobs", {}).items():
+            match = re.match(
+                r"hugoh/go-tools/\.github/workflows/([^@]+)@", job.get("uses", "")
+            )
+            if not match:
+                continue
+            callee = yaml.safe_load(
+                (ROOT / ".github" / "workflows" / match[1]).read_text()
+            )
+            nested = [k for k, j in callee["jobs"].items() if "uses" in j]
+            if nested:
+                failures.append(
+                    f"{workflow.name} job '{job_id}' calls {match[1]}, whose jobs "
+                    f"{nested} call other reusable workflows: the required check "
+                    f"name would gain a segment"
+                )
+
     # The Conventional-Commit PR-title check is unconditional: every repo
     # from this template cuts a GitHub release from its commit history (cog
     # bump, with or without goreleaser), so every one needs the gate.
