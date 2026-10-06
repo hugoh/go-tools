@@ -1,0 +1,4 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Intentionally empty: for repos that don't ship a binary (has_goreleaser=false). Counterpart to binary, so a Go toolchain bump stays the default `chore` and cuts no release. Kept as a real preset so the template can pick one by name."
+}

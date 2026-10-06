@@ -52,7 +52,7 @@ jobs:
               - '.renovaterc.json'
               - 'go-renovaterc.json'
               - 'presets/**'
-              - 'template/.renovaterc.json'
+              - 'template/.renovaterc.json.jinja'
       # mise.toml pins the copier/renovate CLI *tool* versions this repo itself
       # runs with — separate from the paths above, which only cover
       # copier/renovate *config* files. A Renovate-driven bump of either tool's
