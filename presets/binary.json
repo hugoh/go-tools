@@ -1,0 +1,12 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "packageRules": [
+    {
+      "description": "Only for repos that build and release a binary (has_goreleaser): .config/mise/conf.d/go.toml is Copier-seeded once (_skip_if_exists) and Renovate owns Go version bumps there directly afterward. A Go toolchain bump changes the compiled binary and can carry security/bug fixes, so tag it `fix` (not the default `chore`) so cocogitto's `cog bump --auto` cuts a patch release for it on its own — independent of go-tools' release cadence and not bundled with unrelated copier updates. Pure libraries don't extend this preset: nothing they ship changes, so the bump stays `chore`.",
+      "matchManagers": ["mise"],
+      "matchFileNames": [".config/mise/conf.d/go.toml"],
+      "matchDatasources": ["golang-version"],
+      "semanticCommitType": "fix"
+    }
+  ]
+}

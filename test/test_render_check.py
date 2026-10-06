@@ -163,6 +163,17 @@ def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
             f"has_goreleaser ({expect_goreleaser})",
         )
 
+    # The Renovate preset must follow has_goreleaser (binary repos tag Go
+    # bumps `fix`, libraries stay `chore`) and must name a preset that exists.
+    renovaterc = (tmp_path / ".renovaterc.json").read_text()
+    renovaterc = re.sub(r"^\s*//.*$", "", renovaterc, flags=re.MULTILINE)
+    expect_preset = "binary" if expect_goreleaser else "library"
+    preset_ref = f"github>hugoh/go-tools//presets/{expect_preset}"
+    if preset_ref not in json.loads(renovaterc)["extends"]:
+        failures.append(f".renovaterc.json doesn't extend {preset_ref}")
+    if not (ROOT / "presets" / f"{expect_preset}.json").is_file():
+        failures.append(f"presets/{expect_preset}.json does not exist")
+
     # package_format: binary is for gh extensions, which publish raw
     # per-platform binaries instead of deb/rpm packages - regression-tests
     # that the two block types never both appear (or both go missing).

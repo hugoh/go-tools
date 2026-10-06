@@ -54,13 +54,6 @@
       "enabled": true
     },
     {
-      "description": "Unlike mise.toml, .config/mise/conf.d/go.toml is only Copier-seeded once (_skip_if_exists) and Renovate owns Go version bumps there directly afterward. Tag those bumps `fix` (not the default `chore`) since a Go toolchain bump can carry security/bug fixes, so cocogitto's `cog bump --auto` cuts a patch release for it on its own — independent of go-tools' own release cadence and not bundled with unrelated copier updates.",
-      "matchManagers": ["mise"],
-      "matchFileNames": [".config/mise/conf.d/go.toml"],
-      "matchDatasources": ["golang-version"],
-      "semanticCommitType": "fix"
-    },
-    {
       "description": "The hk toolchain group: jdx/hk and hugoh/hk-config move in ONE PR (policy in hugoh/renovate-config//presets/hk-toolchain). This config does not extend renovate-config's default.json, so it repeats the matcher default.json uses; hugoh/hk-config//renovate.json (extended above) only reads the pins. Keep this the LAST packageRule: later rules win.",
       "matchManagers": ["custom.regex"],
       "matchPackageNames": ["jdx/hk", "hugoh/hk-config"],
