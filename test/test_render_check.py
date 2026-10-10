@@ -500,3 +500,11 @@ def test_copier_update_keeps_renovate_go_bump(template_reseeds_go, tmp_path):
     assert "<<<<<<<" not in go_toml.read_text(), "update conflicted on go.toml"
     assert not list(project.rglob("*.rej"))
     assert go_version(project) == renovate_bump
+
+
+def test_template_mise_tasks_are_executable():
+    """mise silently ignores non-executable task files ("task not found")."""
+    tasks = [p for p in (ROOT / "template" / "mise-tasks").iterdir() if p.is_file()]
+    assert tasks
+    not_executable = [p.name for p in tasks if not os.access(p, os.X_OK)]
+    assert not not_executable
