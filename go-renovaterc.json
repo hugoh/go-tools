@@ -15,6 +15,11 @@
   "osvVulnerabilityAlerts": true,
   "packageRules": [
     {
+      "description": "My own packages (hugoh/hk-config, hugoh/gh-workflows, ...) don't need the 7-day soak meant for third-party supply-chain risk: 1 day is enough to catch a bad release. Mirrors renovate-config's default.json, which this config does not extend.",
+      "matchPackageNames": ["hugoh/**"],
+      "extends": ["github>hugoh/renovate-config//presets/first-party-soak"]
+    },
+    {
       "matchManagers": ["github-actions"],
       "groupName": "GitHub Actions"
     },
@@ -52,12 +57,6 @@
       "matchManagers": ["mise"],
       "matchFileNames": ["mise.ci.toml"],
       "enabled": true
-    },
-    {
-      "description": "The hk toolchain group: jdx/hk and hugoh/hk-config move in ONE PR (policy in hugoh/renovate-config//presets/hk-toolchain). This config does not extend renovate-config's default.json, so it repeats the matcher default.json uses; hugoh/hk-config//renovate.json (extended above) only reads the pins. Keep this the LAST packageRule: later rules win.",
-      "matchManagers": ["custom.regex"],
-      "matchPackageNames": ["jdx/hk", "hugoh/hk-config"],
-      "extends": ["github>hugoh/renovate-config//presets/hk-toolchain"]
     }
   ],
   "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths"]

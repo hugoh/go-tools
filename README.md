@@ -38,9 +38,9 @@ The self-referential `hugoh/go-tools/...@<sha>` pins in `ci.yml` (`go-hk.yml`, `
 
 `semantic-pr.yml` calls `hugoh/gh-workflows` directly rather than through a go-tools wrapper workflow: every extra `uses:` hop adds a segment to the check name (`semantic-pr / semantic-pr` → `semantic-pr / semantic-pr / semantic-pr`), which would no longer match the required status check in consumers' branch protection. `render-check` fails if a go-tools reusable workflow forwards to another reusable workflow.
 
-The `hk-config` Pkl package pin in `hk.pkl` follows the same rule: consumer repos' `hk.pkl` is a Copier output, re-rendered on every `copier update`, so it must only change via that same template-update PR — never via a direct in-place edit that would then conflict with the next `copier update`'s merge. That's why `go-renovaterc.json` (the **shared** preset consumer repos extend) deliberately does **not** extend `hugoh/hk-config`'s own Renovate config, unlike every other hugoh repo. The pin only moves once `template/hk.pkl.jinja`'s own copy of it is bumped and a new `go-tools` release/commit lands, at which point the existing "always automerge template updates" `packageRule` above picks it up like any other template change.
+The `hk-config` and `jdx/hk` pins in `hk.pkl` and `mise.toml` follow the same rule: consumer repos' copies are Copier outputs, re-rendered on every `copier update`, so they must only change via that same template-update PR — never via a direct in-place edit that would then conflict with the next `copier update`'s merge. `go-renovaterc.json` picks up `hugoh/hk-config`'s Renovate custom managers through `renovate-config`'s `presets/base`, so `presets/copier-owned-files` (which consumer repos also extend) disables them for `hk.pkl` and `mise.toml`. The pins only move once `template/hk.pkl.jinja` and `template/mise.toml.jinja` are bumped and a new `go-tools` release lands, at which point the copier `packageRule` picks it up like any other template change.
 
-`go-tools`' own `.renovaterc.json` (this repo's config, distinct from the `go-renovaterc.json` preset it publishes) is the one exception that _does_ extend `hugoh/hk-config`'s Renovate config directly, plus two extra `customManagers` scoped to `template/hk.pkl.jinja` — because both `go-tools/hk.pkl` (hand-maintained repo tooling, not a Copier output) and the `.jinja` template source itself (nothing else keeps its embedded pin current) are this repo's own to manage, not something `copier update` touches.
+`go-tools`' own `.renovaterc.json` (this repo's config, distinct from the `go-renovaterc.json` preset it publishes) does not extend `presets/copier-owned-files`, so Renovate keeps `go-tools/hk.pkl` and `mise.toml` (hand-maintained repo tooling, not Copier outputs) current, and three extra `customManagers` cover the pins in `template/hk.pkl.jinja` and `template/mise.toml.jinja`, which nothing else keeps current. `jdx/hk` and `hugoh/hk-config` bumps land in separate PRs, each cutting its own `go-tools` release: hk refuses to run when it is older than hk-config's `min_hk_version`, so an hk-config bump that needs a newer hk fails CI here until the `jdx/hk` bump lands.
 
 To update by hand: run `copier update` inside the repo.
 
@@ -108,6 +108,8 @@ Add to a repo's `.renovaterc.json` to inherit all shared Renovate config (this i
   ]
 }
 ```
+
+`go-renovaterc.json` extends `renovate-config`'s shared `presets/base` (timezone, 7-day third-party release-age soak, monthly window, vulnerability alerts, `hugoh/hk-config`'s custom managers) and gives `hugoh/**` packages the 1-day `presets/first-party-soak`, as `renovate-config`'s `default.json` does for non-Go repos.
 
 The template picks `presets/binary` for repos that ship a binary (`has_goreleaser`) and the empty `presets/library` otherwise; `render-check` asserts the rendered `.renovaterc.json` extends the right one.
 
