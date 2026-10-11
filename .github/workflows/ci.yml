@@ -81,7 +81,7 @@ jobs:
       - uses: hugoh/gh-workflows/setup@7cbb8fcf3a59c29229d6fd9feb02e46e0a02113a # v1.40.3
       # render-check renders the template into throwaway tmpdirs and runs
       # `hk validate` and `mise install` against each. The rendered mise.toml
-      # pins tools this repo's own mise.toml doesn't (go, govulncheck,
+      # pins tools this repo's own mise.toml doesn't (go, gotestsum,
       # deadcode, ...), so the setup action's mise cache never contains them
       # and they'd install from scratch on every run; cache them here too, and
       # the pkl package cache `hk validate` populates. Key on the template
