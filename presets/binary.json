@@ -7,6 +7,15 @@
       "matchFileNames": [".config/mise/conf.d/go.toml"],
       "matchDatasources": ["golang-version"],
       "semanticCommitType": "fix"
+    },
+    {
+      "description": "Go patch releases are mostly security fixes for the stdlib compiled into the shipped binary, so don't hold them for the monthly window or the 7-day third-party soak (this stands in for a govulncheck gate).",
+      "matchManagers": ["mise"],
+      "matchFileNames": [".config/mise/conf.d/go.toml"],
+      "matchDatasources": ["golang-version"],
+      "matchUpdateTypes": ["patch"],
+      "schedule": ["* * * * *"],
+      "minimumReleaseAge": "1 day"
     }
   ]
 }
