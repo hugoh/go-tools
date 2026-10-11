@@ -12,7 +12,7 @@ Templates the config files every Go repo carries: `.golangci.yml`, `.testcoverag
 
 The Go toolchain version is the one exception: it lives in `.config/mise/conf.d/go.toml` (which mise merges in automatically), seeded once from the template and then `_skip_if_exists`'d, so Copier never re-renders it. Renovate owns it there directly. For repos that ship a binary (`has_goreleaser`), the generated `.renovaterc.json` extends `presets/binary`, which tags those bumps `fix`, so a Go version bump cuts its own patch release in the consumer repo — independent of go-tools' release cadence and not bundled with unrelated `mise.toml` tool bumps that only fan out via `copier update`. Go patch bumps also skip the monthly window and get a 1-day soak, since they're mostly stdlib security fixes — this replaces a `govulncheck` gate. Pure libraries extend the empty `presets/library` instead: the bump stays a `chore` and cuts no release, since nothing they ship changes.
 
-A repo that needs a tool only in CI (not in the shared template, and not for local dev) can commit its own `mise.ci.toml` — a mise [environment-specific config file](https://mise.jdx.dev/configuration.html) that mise merges in automatically when `MISE_ENV=ci` is set, which the reusable workflows below (`go-hk.yml`, `go-ci.yml`, `go-release.yml`) always set. `mise.ci.toml` is **not** Copier-managed — it's hand-maintained per repo, and `go-renovaterc.json` has an explicit `packageRule` keeping Renovate's `mise` manager enabled for it (unlike `mise.toml`) so its pins stay current on their own.
+A repo that needs a tool only in CI (not in the shared template, and not for local dev) can commit its own `mise.ci.toml` — a mise [environment-specific config file](https://mise.jdx.dev/configuration.html) that mise merges in automatically when `MISE_ENV=ci` is set, which the reusable workflows below that run the repo's own tasks (`go-ci.yml`, `go-release.yml`) always set. `go-hk.yml` doesn't, so `mise.ci.toml` tools aren't available to `hk check`. `mise.ci.toml` is **not** Copier-managed — it's hand-maintained per repo, and `go-renovaterc.json` has an explicit `packageRule` keeping Renovate's `mise` manager enabled for it (unlike `mise.toml`) so its pins stay current on their own.
 
 ### Bootstrapping a brand-new repo
 
@@ -24,9 +24,9 @@ A repo that needs a tool only in CI (not in the shared template, and not for loc
    ```
 
    Answer the prompts (`has_test_int`, `has_gen`, `coverage_total`, the `golangci_*` lists, etc). This generates every file above, including a starter `mise.toml` (which already pins `copier`, so it's mise-managed from here on), plus `.copier-answers.yml` to track the template going forward.
-3. Push to GitHub, add the `TAP_GITHUB_TOKEN` if `has_homebrew_cask` is set — needed by `go-release.yml` to publish the Homebrew cask, confirm Renovate is enabled (it'll pick up `.renovaterc.json` automatically). Renovate will also detect `.copier-answers.yml` and create template update PRs automatically going forward.
+3. Push to GitHub. If `has_homebrew_cask` is set, add the repo to `TAP_GITHUB_TOKEN`'s targets (`~/Code/iac/github/repo-admin.sh secrets edit`, then `secrets sync`) — `go-release.yml` needs it to publish the Homebrew cask. Confirm Renovate is enabled (it'll pick up `.renovaterc.json` automatically). Renovate will also detect `.copier-answers.yml` and create template update PRs automatically going forward.
 4. `mise install && hk install && mise run ci` locally to confirm everything's green before the first push.
-5. `mise run gh-repo-setup owner/repo` — one-time branch protection (PR required, `hk`/`goci`/`release` required checks, no direct pushes), auto-merge, and delete-branch-on-merge. Requires `gh auth login` with a token that has repo admin access.
+5. Once the first PR's checks have run, `~/Code/iac/github/repo-admin.sh sync <repo>` — branch protection, merge settings, features, security. Protection sync reads the required checks from a PR's check runs, so running it before any PR exists would require nothing.
 
 ### Keeping a repo up to date
 
