@@ -43,13 +43,14 @@
       "enabled": false
     },
     {
-      "description": "A go-tools release only reaches a consumer via this Copier-update PR. It lands as the default `chore`: the template changes are dev/CI tooling (mise tool pins, pinned actions) that don't alter the consumer's shipped binary, so they shouldn't cut a consumer release (Go toolchain bumps are handled separately via conf.d/go.toml). First-party, so it takes the 1-day soak: go-tools releases several times a day, and the 7-day third-party soak kept restarting, so the copier PR never matured.",
+      "description": "A go-tools release only reaches a consumer via this Copier-update PR. It lands as the default `chore`: the template changes are dev/CI tooling (mise tool pins, pinned actions) that don't alter the consumer's shipped binary, so they shouldn't cut a consumer release (Go toolchain bumps are handled separately via conf.d/go.toml). First-party, so it takes the 1-day soak: go-tools releases several times a day, and the 7-day third-party soak kept restarting, so the copier PR never matured. The copier datasource is a bare git repo with no release timestamps, so timestamp-optional is required or every release stays pending forever.",
       "matchManagers": ["copier"],
       "matchPackageNames": ["https://github.com/hugoh/go-tools.git"],
       "extends": [
         "github>hugoh/renovate-config//presets/chain-debounce",
         "github>hugoh/renovate-config//presets/first-party-soak"
       ],
+      "minimumReleaseAgeBehaviour": "timestamp-optional",
       "automerge": true
     },
     {
