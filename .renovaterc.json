@@ -97,8 +97,7 @@
       "matchManagers": ["mise"],
       "matchFileNames": ["mise.toml"],
       "matchUpdateTypes": ["minor", "patch", "digest", "pin"],
-      "matchDepNames": ["!npm:renovate"],
-      "matchDatasources": ["!golang-version"],
+      "matchDepNames": ["!npm:renovate", "!go"],
       "groupName": "dev tools"
     },
     {
@@ -106,7 +105,7 @@
       "matchManagers": ["mise"],
       "matchFileNames": ["template/mise.toml.jinja"],
       "matchUpdateTypes": ["minor", "patch", "digest", "pin"],
-      "matchDatasources": ["!golang-version"],
+      "matchDepNames": ["!go"],
       "groupName": "template dev tools"
     }
   ],
