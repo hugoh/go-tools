@@ -10,7 +10,8 @@
     ":automergeLinters",
     ":automergeMinor",
     ":automergeDigest",
-    "github>hugoh/renovate-config//presets/base"
+    "github>hugoh/renovate-config//presets/base",
+    "github>hugoh/renovate-config//presets/weekend"
   ],
   "osvVulnerabilityAlerts": true,
   "packageRules": [
@@ -20,13 +21,26 @@
       "extends": ["github>hugoh/renovate-config//presets/first-party-soak"]
     },
     {
+      "description": "Non-major GitHub Actions bumps are grouped. Majors stay ungrouped so they keep the monthly window instead of dragging the weekly group onto it.",
       "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "groupName": "GitHub Actions"
     },
     {
       "matchManagers": ["gomod"],
       "matchUpdateTypes": ["minor", "patch"],
       "groupName": "Go dependencies"
+    },
+    {
+      "description": "Everything runs in the weekend window (top-level extends) except major updates, which stay on the monthly window. renovate-config's default.json does the same via minor/patch rules, but this hub only extends presets/base. Lock-file maintenance and vulnerability alerts keep their own schedules.",
+      "matchUpdateTypes": ["major"],
+      "schedule": ["* * 1 * *"]
+    },
+    {
+      "description": "Go pseudo-versions (digest updates such as charmbracelet/x/exp/teatest/v2) carry no releaseTimestamp, so under the default timestamp-required behaviour the 7-day soak keeps them pending forever. Treat a missing timestamp as 'old enough'.",
+      "matchManagers": ["gomod"],
+      "matchUpdateTypes": ["digest"],
+      "minimumReleaseAgeBehaviour": "timestamp-optional"
     },
     {
       "description": "ci.yml's hugoh/go-tools reusable-workflow pins are Copier-owned (regenerated with a version comment on every `copier update`), so keep Renovate's github-actions manager off them to avoid the two racing. Scoped to this file only: a hand-maintained workflow that calls a go-tools reusable workflow (e.g. a repo-specific compat matrix) still gets managed normally.",
