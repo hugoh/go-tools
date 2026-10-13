@@ -58,7 +58,7 @@ Referenced automatically by the templated `.github/workflows/ci.yml` via `uses:`
 
 - `go-hk.yml` — runs `hk check` (lint/format/security checks via mise+hk).
 - `go-ci.yml` — runs `mise ci` (build, test, coverage).
-- `go-release.yml` — cocogitto version bump + goreleaser release, triggered by a tag push (or dry-run validated on PRs).
+- `go-release.yml` — cocogitto version bump + goreleaser release, triggered by a tag push.
 - `go-tool-compat.yml` — runs a repo's integration tests against the newest few version series of a mise tool (version list via `hugoh/gh-workflows/mise-latest-versions`). **Opt-in**, not wired by the template — used by `hrd` and `jj-trim`, which exec a real `jj`. Add a caller workflow with its own triggers:
 
   ```yaml
