@@ -32,9 +32,9 @@
       "groupName": "Go dependencies"
     },
     {
-      "description": "Everything runs in the weekend window (top-level extends) except major updates, which stay on the monthly window. renovate-config's default.json does the same via minor/patch rules, but this hub only extends presets/base. Lock-file maintenance and vulnerability alerts keep their own schedules.",
+      "description": "Everything runs in the weekend window (top-level extends) except major updates, which stay on the monthly (first-weekend) window. renovate-config's default.json does the same via minor/patch rules, but this hub only extends presets/base. Lock-file maintenance and vulnerability alerts keep their own schedules.",
       "matchUpdateTypes": ["major"],
-      "schedule": ["* * 1 * *"]
+      "extends": ["github>hugoh/renovate-config//presets/monthly-weekend"]
     },
     {
       "description": "Go pseudo-versions (digest updates such as charmbracelet/x/exp/teatest/v2) carry no releaseTimestamp, so under the default timestamp-required behaviour the 7-day soak keeps them pending forever. Treat a missing timestamp as 'old enough'.",
