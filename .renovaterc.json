@@ -93,20 +93,22 @@
       "groupName": "pytest (test infra)"
     },
     {
-      "description": "Group non-major bumps to the repo's own mise.toml into one 'dev tools' PR instead of one per tool. npm:renovate keeps its debounce schedule; Go toolchain bumps stay standalone.",
+      "description": "Group non-major bumps to the repo's own mise.toml into one monthly 'dev tools' PR (first weekend of the month) instead of one per tool. npm:renovate keeps its debounce schedule, Go toolchain bumps stay standalone, and golangci-lint stays weekly: it has to be built with a Go at least as new as the code it lints, so a monthly lag would break lint on the next Go bump.",
       "matchManagers": ["mise"],
       "matchFileNames": ["mise.toml"],
       "matchUpdateTypes": ["minor", "patch", "digest", "pin"],
-      "matchDepNames": ["!npm:renovate", "!go"],
-      "groupName": "dev tools"
+      "matchDepNames": ["!npm:renovate", "!go", "!golangci-lint"],
+      "groupName": "dev tools",
+      "extends": ["github>hugoh/renovate-config//presets/monthly-weekend"]
     },
     {
-      "description": "Same for template/mise.toml.jinja, kept a separate group so the batch stays `fix` (per the rule above) and cuts one go-tools release + one copier fan-out instead of one per tool.",
+      "description": "Same for template/mise.toml.jinja, kept a separate group so the batch stays `fix` (per the rule above) and cuts one go-tools release + one copier fan-out a month instead of one per tool. golangci-lint stays weekly, as above.",
       "matchManagers": ["mise"],
       "matchFileNames": ["template/mise.toml.jinja"],
       "matchUpdateTypes": ["minor", "patch", "digest", "pin"],
-      "matchDepNames": ["!go"],
-      "groupName": "template dev tools"
+      "matchDepNames": ["!go", "!golangci-lint"],
+      "groupName": "template dev tools",
+      "extends": ["github>hugoh/renovate-config//presets/monthly-weekend"]
     }
   ],
   "mise": {
