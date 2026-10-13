@@ -2,9 +2,20 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "github>hugoh/go-tools:go-renovaterc",
-    "github>hugoh/renovate-config//presets/npm-renovate-debounce"
+    "github>hugoh/renovate-config//presets/npm-renovate-debounce",
+    "customManagers:biomeVersions"
   ],
   "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Bump the biome $schema in the Copier template's biome.jsonc.jinja (customManagers:biomeVersions only reads biome.json/biome.jsonc, and the rendered biome.jsonc in consumer repos is Copier-owned, so it is not tracked there).",
+      "managerFilePatterns": ["/^template/biome\\.jsonc\\.jinja$/"],
+      "matchStrings": [
+        "biomejs\\.dev/schemas/(?<currentValue>[^/]+)/schema\\.json"
+      ],
+      "datasourceTemplate": "npm",
+      "depNameTemplate": "@biomejs/biome"
+    },
     {
       "customType": "regex",
       "description": "Bump the hugoh/hk-config Pkl package pin in the Copier template's hk.pkl.jinja (not caught by hk-config's own .pkl-only customManager)",
@@ -109,6 +120,31 @@
       "matchDepNames": ["!go", "!golangci-lint"],
       "groupName": "template dev tools",
       "extends": ["github>hugoh/renovate-config//presets/monthly-weekend"]
+    },
+    {
+      "description": "The mise manager looks biome up through github-tags, which finds no updates for it (the tags are @biomejs/biome@<version>), so the pin never moved while the npm-tracked $schema did. Look it up on npm like renovate-config's biome toolchain rule.",
+      "matchManagers": ["mise"],
+      "matchDepNames": ["biome"],
+      "overrideDatasource": "npm",
+      "overridePackageName": "@biomejs/biome"
+    },
+    {
+      "description": "go-tools' own biome pin and biome.json $schema move in one weekend PR, so the CLI never lags the schema it validates against. Must stay BELOW the dev tools rule above, whose groupName and monthly schedule it replaces.",
+      "matchFileNames": ["mise.toml", "biome.json"],
+      "matchDepNames": ["biome", "biomejs/biome", "@biomejs/biome"],
+      "groupName": "biome toolchain",
+      "extends": ["github>hugoh/renovate-config//presets/weekend"]
+    },
+    {
+      "description": "The same for the template: its pin and $schema reach consumers only through a new go-tools tag, so they move in one `fix` PR (one release, one Copier fan-out). Must stay BELOW the template dev tools rule above.",
+      "matchFileNames": [
+        "template/mise.toml.jinja",
+        "template/biome.jsonc.jinja"
+      ],
+      "matchDepNames": ["biome", "biomejs/biome", "@biomejs/biome"],
+      "groupName": "template biome toolchain",
+      "semanticCommitType": "fix",
+      "extends": ["github>hugoh/renovate-config//presets/weekend"]
     }
   ],
   "mise": {
