@@ -122,6 +122,26 @@
       "extends": ["github>hugoh/renovate-config//presets/monthly-weekend"]
     },
     {
+      "description": "hk and hk-config bump together in the monthly 'dev tools' PR: an hk-config release can require a newer hk (min_hk_version), which fails CI until the hk bump lands, so they must not arrive separately. They are read by custom managers (the mise manager is disabled for hk), so the dev tools rule above never sees them. 7-day soak for both, so hk-config can't mature before the hk it needs: updates join a branch as each one matures. Mirrors renovate-config's hk/hk-config linters rule, which this repo doesn't extend.",
+      "matchManagers": ["custom.regex"],
+      "matchFileNames": ["hk.pkl", "mise.toml"],
+      "matchPackageNames": ["jdx/hk", "hugoh/hk-config"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "minimumReleaseAge": "7 days",
+      "groupName": "dev tools",
+      "extends": ["github>hugoh/renovate-config//presets/monthly-weekend"]
+    },
+    {
+      "description": "Same for the template's hk.pkl.jinja and mise.toml.jinja pins, in the `fix` 'template dev tools' batch so they cut one go-tools release and one Copier fan-out with the other template tools.",
+      "matchManagers": ["custom.regex"],
+      "matchFileNames": ["template/hk.pkl.jinja", "template/mise.toml.jinja"],
+      "matchPackageNames": ["jdx/hk", "hugoh/hk-config"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "minimumReleaseAge": "7 days",
+      "groupName": "template dev tools",
+      "extends": ["github>hugoh/renovate-config//presets/monthly-weekend"]
+    },
+    {
       "description": "The mise manager looks biome up through github-tags, which finds no updates for it (the tags are @biomejs/biome@<version>), so the pin never moved while the npm-tracked $schema did. Look it up on npm like renovate-config's biome toolchain rule.",
       "matchManagers": ["mise"],
       "matchDepNames": ["biome"],
