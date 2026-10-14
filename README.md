@@ -30,7 +30,7 @@ A repo that needs a tool only in CI (not in the shared template, and not for loc
 
 ### Keeping a repo up to date
 
-Template updates are handled by **Renovate's built-in copier manager**. When a new version of `go-tools` is tagged, Renovate detects the outdated `_commit` in `.copier-answers.yml`, runs `copier update`, and opens a PR. Schedule: at any time.
+Template updates are handled by **Renovate's built-in copier manager**. When a new version of `go-tools` is tagged, Renovate detects the outdated `_commit` in `.copier-answers.yml`, runs `copier update`, and opens a PR on the weekend window (Friday 5pm to Sunday 5am), with the 1-day first-party soak, and automerges it.
 
 `copier.yml` pins `_src_path` to the full `https://github.com/hugoh/go-tools.git` URL, which gets force-written into every consumer's `.copier-answers.yml` regardless of how `copier copy`/`copier update` was actually invoked. This works around a Renovate limitation: its copier manager passes `_src_path` straight to git as a remote, so Copier's `gh:owner/repo` shorthand (which Copier itself expands internally, but records unexpanded in `.copier-answers.yml`) isn't resolvable and silently breaks update detection ([renovatebot/renovate#39938](https://github.com/renovatebot/renovate/issues/39938) tracks adding `gh:`/`gl:` support upstream). Because of this pin, bootstrapping with `gh:hugoh/go-tools` (as shown above) is safe — the recorded source is corrected regardless.
 
@@ -109,7 +109,7 @@ Add to a repo's `.renovaterc.json` to inherit all shared Renovate config (this i
 }
 ```
 
-`go-renovaterc.json` extends `renovate-config`'s shared `presets/base` (timezone, 7-day third-party release-age soak, monthly window, vulnerability alerts, `hugoh/hk-config`'s custom managers) and gives `hugoh/**` packages the 1-day `presets/first-party-soak`, as `renovate-config`'s `default.json` does for non-Go repos.
+`go-renovaterc.json` extends `renovate-config`'s shared `presets/base` (timezone, 7-day third-party and 1-day `hugoh/**` release-age soaks, monthly window, GitHub and OSV vulnerability alerts, automerge for linters, minor and digest updates, `hugoh/hk-config`'s custom managers), the same base `renovate-config`'s `default.json` builds on for non-Go repos.
 
 The template picks `presets/binary` for repos that ship a binary (`has_goreleaser`) and the empty `presets/library` otherwise; `render-check` asserts the rendered `.renovaterc.json` extends the right one.
 

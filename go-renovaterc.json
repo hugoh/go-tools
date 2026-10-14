@@ -7,19 +7,10 @@
     "security:gomodIndirectSecurityUpdates",
     "customManagers:githubActionsVersions",
     "helpers:pinGitHubActionDigests",
-    ":automergeLinters",
-    ":automergeMinor",
-    ":automergeDigest",
     "github>hugoh/renovate-config//presets/base",
     "github>hugoh/renovate-config//presets/weekend"
   ],
-  "osvVulnerabilityAlerts": true,
   "packageRules": [
-    {
-      "description": "My own packages (hugoh/hk-config, hugoh/gh-workflows, ...) don't need the 7-day soak meant for third-party supply-chain risk: 1 day is enough to catch a bad release. Mirrors renovate-config's default.json, which this config does not extend.",
-      "matchPackageNames": ["hugoh/**"],
-      "extends": ["github>hugoh/renovate-config//presets/first-party-soak"]
-    },
     {
       "description": "Non-major GitHub Actions bumps are grouped. Majors stay ungrouped so they keep the monthly window instead of dragging the weekly group onto it.",
       "matchManagers": ["github-actions"],
@@ -61,7 +52,7 @@
       "matchManagers": ["copier"],
       "matchPackageNames": ["https://github.com/hugoh/go-tools.git"],
       "extends": [
-        "github>hugoh/renovate-config//presets/chain-debounce",
+        "github>hugoh/renovate-config//presets/weekend",
         "github>hugoh/renovate-config//presets/first-party-soak"
       ],
       "minimumReleaseAgeBehaviour": "timestamp-optional",
