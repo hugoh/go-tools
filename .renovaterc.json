@@ -129,11 +129,11 @@
       "overridePackageName": "@biomejs/biome"
     },
     {
-      "description": "go-tools' own biome pin and biome.json $schema move in one weekend PR, so the CLI never lags the schema it validates against. Must stay BELOW the dev tools rule above, whose groupName and monthly schedule it replaces.",
+      "description": "go-tools' own biome pin and biome.json $schema move in one PR, so the CLI never lags the schema it validates against, on the same first-weekend window as the dev tools it comes out of (biome is a linter and formatter: a release that adds a rule or reformats code can fail CI). Must stay BELOW the dev tools rule above, whose groupName it replaces.",
       "matchFileNames": ["mise.toml", "biome.json"],
       "matchDepNames": ["biome", "biomejs/biome", "@biomejs/biome"],
       "groupName": "biome toolchain",
-      "extends": ["github>hugoh/renovate-config//presets/weekend"]
+      "extends": ["github>hugoh/renovate-config//presets/monthly-weekend"]
     },
     {
       "description": "The same for the template: its pin and $schema reach consumers only through a new go-tools tag, so they move in one `fix` PR (one release, one Copier fan-out). Must stay BELOW the template dev tools rule above.",
@@ -144,7 +144,7 @@
       "matchDepNames": ["biome", "biomejs/biome", "@biomejs/biome"],
       "groupName": "template biome toolchain",
       "semanticCommitType": "fix",
-      "extends": ["github>hugoh/renovate-config//presets/weekend"]
+      "extends": ["github>hugoh/renovate-config//presets/monthly-weekend"]
     }
   ],
   "mise": {
