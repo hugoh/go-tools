@@ -61,7 +61,7 @@ jobs:
       # etc.) trigger both.
       - name: Detect mise.toml tool version bumps
         id: mise-tool-bumps
-        uses: hugoh/gh-workflows/tool-bumps@8c946a496e3f02569b0964bda0eba79a2082660d # v1.40.8
+        uses: hugoh/gh-workflows/tool-bumps@5e3ffc337ef532df4ff618c5d2844a09b254eaee # v1.40.10
 
   hk:
     uses: $/.github/workflows/go-hk.yml
@@ -78,7 +78,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: hugoh/gh-workflows/setup@8c946a496e3f02569b0964bda0eba79a2082660d # v1.40.8
+      - uses: hugoh/gh-workflows/setup@5e3ffc337ef532df4ff618c5d2844a09b254eaee # v1.40.10
       # render-check renders the template into throwaway tmpdirs and runs
       # `hk validate` and `mise install` against each. The rendered mise.toml
       # pins tools this repo's own mise.toml doesn't (go, gotestsum,
@@ -107,7 +107,7 @@ jobs:
     steps:
       # hk check pulls in the always-on conventional_commit step
       # (cog check --from-latest-tag), which needs tags and full history.
-      - uses: hugoh/gh-workflows/setup@8c946a496e3f02569b0964bda0eba79a2082660d # v1.40.8
+      - uses: hugoh/gh-workflows/setup@5e3ffc337ef532df4ff618c5d2844a09b254eaee # v1.40.10
         with:
           fetch-depth: 0
       - name: hk check (renovate config)
