@@ -14,9 +14,9 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: hugoh/gh-workflows/setup@8c946a496e3f02569b0964bda0eba79a2082660d # v1.40.8
+      - uses: hugoh/gh-workflows/setup@5e3ffc337ef532df4ff618c5d2844a09b254eaee # v1.40.10
         with:
           fetch-depth: 0
-      - uses: hugoh/gh-workflows/hk-check@8c946a496e3f02569b0964bda0eba79a2082660d # v1.40.8
+      - uses: hugoh/gh-workflows/hk-check@5e3ffc337ef532df4ff618c5d2844a09b254eaee # v1.40.10
         env:
           PINACT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
