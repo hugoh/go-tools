@@ -7,7 +7,7 @@ set -euo pipefail
 # first release tag exists, which is every brand-new repo's first PR. Before
 # then, check the whole history; it's short. cog only counts tags matching
 # cog.toml's tag_prefix ("v").
-if [ -n "$(git tag --list 'v*')" ]; then
+if [ "$(git tag --list 'v*')" != "" ]; then
   exec cog check --from-latest-tag
 fi
 
