@@ -508,3 +508,43 @@ def test_template_mise_tasks_are_executable():
     assert tasks
     not_executable = [p.name for p in tasks if not os.access(p, os.X_OK)]
     assert not not_executable
+
+
+@pytest.mark.parametrize(
+    "history,ok",
+    [
+        pytest.param(["feat: a", "fix: b"], True, id="no-tags"),
+        pytest.param(["feat: a", "bad message"], False, id="no-tags-bad"),
+        pytest.param(
+            ["bad message", "TAG v0.1.0", "fix: b"], True, id="bad-before-tag"
+        ),
+        pytest.param(
+            ["feat: a", "TAG v0.1.0", "bad message"], False, id="bad-after-tag"
+        ),
+        pytest.param(["feat: a", "TAG other-1", "fix: b"], True, id="unprefixed-tag"),
+        pytest.param(
+            ["bad message", "TAG other-1", "fix: b"], False, id="unprefixed-bad"
+        ),
+    ],
+)
+@pytest.mark.usefixtures("hermetic_git")
+def test_lint_commits(history, ok, tmp_path):
+    """lint-commits must work in a brand-new repo with no release tag yet.
+
+    `cog check --from-latest-tag` errors with "unable to get any tag" until
+    the first `v*` tag exists, which failed hk on every new repo's first PR.
+    Neither file is Jinja-rendered, so they're used straight from template/.
+    """
+    shutil.copy(ROOT / "template" / "cog.toml", tmp_path / "cog.toml")
+    git(tmp_path, "init", "-q")
+    commit_all(tmp_path, "chore: init")
+    for entry in history:
+        if entry.startswith("TAG "):
+            git(tmp_path, "tag", entry.removeprefix("TAG "))
+        else:
+            git(tmp_path, "commit", "-q", "--allow-empty", "-m", entry)
+
+    passed, log = run(
+        [str(ROOT / "template" / "mise-tasks" / "lint-commits")], cwd=tmp_path
+    )
+    assert passed == ok, log
