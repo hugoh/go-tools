@@ -137,6 +137,12 @@ def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
     if not (tmp_path / ".github" / "workflows" / "semantic-pr.yml").is_file():
         failures.append(".github/workflows/semantic-pr.yml was not rendered")
 
+    if (
+        "profile: default"
+        not in (tmp_path / ".github" / "jactionlint.yaml").read_text()
+    ):
+        failures.append(".github/jactionlint.yaml does not set profile: default")
+
     # Every project - library or binary - gets an automatic semver tag and
     # GitHub release from its conventional-commit history. Only binary
     # projects (has_goreleaser: true) additionally build/publish artifacts.
@@ -299,10 +305,10 @@ def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
             mise_tasks_files,
             lambda: run(["shellharden", "--check", *mise_tasks_files]),
         ),
-        "actionlint": lambda: cached_check(
-            "actionlint",
+        "jactionlint": lambda: cached_check(
+            "jactionlint",
             workflow_files,
-            lambda: run(["actionlint", *workflow_files]),
+            lambda: run(["jactionlint", *workflow_files]),
         ),
         "rumdl check": lambda: run(
             ["rumdl", "check", "--exclude", "README.md", "."],
