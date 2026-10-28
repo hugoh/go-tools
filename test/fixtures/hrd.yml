@@ -15,17 +15,15 @@ has_pages: true
 pages_gen_cmd: ["go run ./cmd/genweb"]
 pages_dir: "site"
 has_fuzz: false
-golangci_extra_disable: [
-  godoclint,
-  ireturn,
-  varnamelen,
-]
+golangci_extra_disable:
+  - godoclint
+  - ireturn
+  - varnamelen
 golangci_test_exclude_linters: [noctx, goconst, gosec]
 golangci_extra_exclusions: []
 coverage_total: 90
 testcoverage_overrides: [{path: "backends/", threshold: 100}]
-testcoverage_excludes: [
-  "main\\.go$ # Program entry point",
-  "cmd/genreadme/",
-  "internal/backend/backendtest/ # shared test helpers, exercised only from other packages' tests",
-]
+testcoverage_excludes:
+  - "main\\.go$ # Program entry point"
+  - "cmd/genreadme/"
+  - "internal/backend/backendtest/ # shared test helpers, exercised only from other packages' tests"
