@@ -113,6 +113,23 @@ gen_check_cmd:
   help: Shell command that fails if generated output is stale
   when: "[[ has_gen ]]"
 
+has_prebuild:
+  type: bool
+  default: false
+  help: Project embeds or reads files it does not commit (adds a prebuild mise task that build, test and the lint tasks depend on)
+
+prebuild_cmd:
+  type: json
+  default: []
+  help: "Shell commands to run first, to fetch or generate those files: list of strings"
+  when: "[[ has_prebuild ]]"
+
+prebuild_outputs:
+  type: json
+  default: []
+  help: "Globs of the files they produce; added to the sources of build and test so a change rebuilds: list of strings"
+  when: "[[ has_prebuild ]]"
+
 has_pages:
   type: bool
   default: false
