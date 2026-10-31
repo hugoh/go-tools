@@ -20,3 +20,6 @@ ruff = "0.16.9"
 ty = "0.0.84"
 "npm:renovate" = { version = "44.181.1", trust_policy_excludes = ["*"] }
 cocogitto = "7.0.0"
+
+[settings]
+task.disable_paths = ["template"]
