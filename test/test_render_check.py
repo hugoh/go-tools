@@ -88,6 +88,54 @@ def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
             f"has_executable ({expect_dev})",
         )
 
+    # has_prebuild adds a `prebuild` task and makes every task that compiles Go
+    # depend on it, so what a repo embeds but does not commit exists first.
+    # Their `sources` must also list the outputs: mise skips a task whose
+    # sources are unchanged, which would reuse a binary built from stale files.
+    expect_prebuild = answers.get("has_prebuild", False)
+    prebuild_task = tmp_path / "mise-tasks" / "prebuild"
+    if prebuild_task.exists() != expect_prebuild:
+        failures.append(
+            f"mise-tasks/prebuild existence ({prebuild_task.exists()}) doesn't "
+            f"match has_prebuild ({expect_prebuild})"
+        )
+    if expect_prebuild and prebuild_task.exists():
+        if not os.access(prebuild_task, os.X_OK):
+            failures.append("mise-tasks/prebuild is not executable")
+        for cmd in answers.get("prebuild_cmd", []):
+            if cmd not in prebuild_task.read_text():
+                failures.append(f"mise-tasks/prebuild lacks prebuild_cmd {cmd!r}")
+    for name in (
+        "build",
+        "test",
+        "lint-go",
+        "lint-deadcode",
+        "dev",
+        "fuzz",
+        "test-int",
+    ):
+        task = tmp_path / "mise-tasks" / name
+        if not task.exists():
+            continue
+        directives = {
+            line.split("=", 1)[0]: line.split("=", 1)[1]
+            for line in task.read_text().splitlines()
+            if line.startswith("#MISE ") and "=" in line
+        }
+        depends = json.loads(directives.get("#MISE depends", "[]"))
+        if ("prebuild" in depends) != expect_prebuild:
+            failures.append(
+                f"mise-tasks/{name} depends on prebuild ({'prebuild' in depends}), "
+                f"expected {expect_prebuild}"
+            )
+        if expect_prebuild and name in ("build", "test"):
+            sources = json.loads(directives.get("#MISE sources", "[]"))
+            for output in answers.get("prebuild_outputs", []):
+                if output not in sources:
+                    failures.append(
+                        f"mise-tasks/{name} sources lack prebuild output {output!r}"
+                    )
+
     try:
         tomllib.loads((tmp_path / "mise.toml").read_text())
     except tomllib.TOMLDecodeError as e:

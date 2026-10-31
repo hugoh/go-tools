@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
 # DO NOT EDIT — managed by hugoh/go-tools via copier.
 #MISE description="Development mode"
+[%- if has_prebuild %]
+#MISE depends=["prebuild"]
+[%- endif %]
 go run . "$@"

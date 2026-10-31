@@ -2,4 +2,7 @@
 # DO NOT EDIT — managed by hugoh/go-tools via copier.
 #MISE description="Run integration tests"
 #MISE sources=["go.mod", "**/*.go"]
+[%- if has_prebuild %]
+#MISE depends=["prebuild"]
+[%- endif %]
 [[ test_int_cmd ]]

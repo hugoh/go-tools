@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 # DO NOT EDIT — managed by hugoh/go-tools via copier.
 #MISE description="Run tests with coverage"
+[%- if has_prebuild %]
+#MISE sources=[[ (["go.mod", "**/*.go"] + prebuild_outputs) | tojson ]]
+#MISE depends=["prebuild"]
+[%- else %]
 #MISE sources=["go.mod", "**/*.go"]
+[%- endif %]
 gotestsum -- -race -shuffle=on -coverprofile="$COVEROUT" -covermode=atomic ./...

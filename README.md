@@ -50,6 +50,21 @@ See `copier.yml` in this repo for the full list of variables (coverage threshold
 
 `go-tools`'s own `ci.yml` has a `release` job (push-to-main only, after `hk` passes) that runs `cocogitto bump --auto` and pushes the resulting tag using the default `GITHUB_TOKEN`. Version bumps follow Conventional Commits as usual (`fix:` → patch, `feat:` → minor, breaking change → major); merge a conventional-commit PR to main and a new tag appears automatically. No manual `git tag` is needed.
 
+### Files a repo embeds but does not commit (`has_prebuild`)
+
+Some repos `go:embed` or read files that are fetched or generated rather than committed (a built stylesheet, a vendored script). Committing them means a bot or a person has to regenerate and commit on every dependency bump, and the stale-files check fails the bump's own PR. Set `has_prebuild: true` instead, with:
+
+- `prebuild_cmd`: the shell commands that produce the files (for example `["mise run vendor-web"]`).
+- `prebuild_outputs`: globs of what they produce.
+
+The template then adds a `prebuild` mise task and makes `build`, `test`, `lint-go`, `lint-deadcode` (and `dev`, `fuzz`, `test-int` where they exist) depend on it, so `mise ci` and every local task regenerate first. The outputs are also added to the `sources` of `build` and `test`: mise skips a task whose sources are unchanged, which would otherwise reuse a binary built from stale files. The command should leave a file untouched when its content is unchanged, so an unchanged input does not force a rebuild.
+
+The repo has to take care of the rest:
+
+- Gitignore the outputs.
+- Make the package compile without them (for example `go:embed` a directory that also holds committed files), because `hk` runs `golangci-lint` directly and not through mise, and `go build` or `go install` outside mise will not run `prebuild`.
+- Fail clearly at runtime, or mark the version, when a binary was built without them.
+
 ---
 
 ## Reusable workflows
