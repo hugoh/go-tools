@@ -105,6 +105,23 @@ def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
         for cmd in answers.get("prebuild_cmd", []):
             if cmd not in prebuild_task.read_text():
                 failures.append(f"mise-tasks/prebuild lacks prebuild_cmd {cmd!r}")
+        # Tasks it names run as tasks of their own, so mise can skip them when
+        # their sources and outputs say they are up to date.
+        prebuild_depends = json.loads(
+            next(
+                (
+                    line.split("=", 1)[1]
+                    for line in prebuild_task.read_text().splitlines()
+                    if line.startswith("#MISE depends=")
+                ),
+                "[]",
+            )
+        )
+        if prebuild_depends != answers.get("prebuild_depends", []):
+            failures.append(
+                f"mise-tasks/prebuild depends on {prebuild_depends}, expected "
+                f"prebuild_depends {answers.get('prebuild_depends', [])}"
+            )
     for name in (
         "build",
         "test",

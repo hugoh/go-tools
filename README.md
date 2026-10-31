@@ -54,7 +54,8 @@ See `copier.yml` in this repo for the full list of variables (coverage threshold
 
 Some repos `go:embed` or read files that are fetched or generated rather than committed (a built stylesheet, a vendored script). Committing them means a bot or a person has to regenerate and commit on every dependency bump, and the stale-files check fails the bump's own PR. Set `has_prebuild: true` instead, with:
 
-- `prebuild_cmd`: the shell commands that produce the files (for example `["mise run vendor-web"]`).
+- `prebuild_depends`: repo mise tasks that produce the files (for example `["vendor-web"]`). Prefer this: a task that mise runs itself can declare `sources` and `outputs`, so mise skips it when they are up to date. A task that leaves an unchanged output alone should still `touch` it, or mise sees the sources as newer and reruns it every time.
+- `prebuild_cmd`: shell commands to run after those tasks, for anything not worth a task. Commands are run by the script, not by mise, so they are never skipped.
 - `prebuild_outputs`: globs of what they produce.
 
 The template then adds a `prebuild` mise task and makes `build`, `test`, `lint-go`, `lint-deadcode` (and `dev`, `fuzz`, `test-int` where they exist) depend on it, so `mise ci` and every local task regenerate first. The outputs are also added to the `sources` of `build` and `test`: mise skips a task whose sources are unchanged, which would otherwise reuse a binary built from stale files. The command should leave a file untouched when its content is unchanged, so an unchanged input does not force a rebuild.

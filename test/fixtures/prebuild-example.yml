@@ -1,6 +1,7 @@
 project_name: prebuild-example
 has_prebuild: true
-prebuild_cmd: ["mise run vendor-web"]
+prebuild_depends: ["vendor-web"]
+prebuild_cmd: ["echo prebuilt"]
 prebuild_outputs: ["internal/web/static/vendor/*"]
 has_fuzz: true
 has_test_int: true

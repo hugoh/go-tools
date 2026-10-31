@@ -118,10 +118,16 @@ has_prebuild:
   default: false
   help: Project embeds or reads files it does not commit (adds a prebuild mise task that build, test and the lint tasks depend on)
 
+prebuild_depends:
+  type: json
+  default: []
+  help: "Repo mise tasks that produce those files, run as tasks of their own so mise can skip them when their sources and outputs are up to date: list of task names"
+  when: "[[ has_prebuild ]]"
+
 prebuild_cmd:
   type: json
   default: []
-  help: "Shell commands to run first, to fetch or generate those files: list of strings"
+  help: "Shell commands to run after those tasks, for anything not worth a task: list of strings"
   when: "[[ has_prebuild ]]"
 
 prebuild_outputs:
