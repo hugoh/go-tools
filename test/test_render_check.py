@@ -418,7 +418,7 @@ def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
             lambda: run(["jactionlint", *workflow_files]),
         ),
         "rumdl check": lambda: run(
-            ["rumdl", "check", "--exclude", "README.md", "."],
+            ["rumdl", "check", "--no-cache", "--exclude", "README.md", "."],
             cwd=tmp_path,
         ),
         "tombi format check": lambda: run(
