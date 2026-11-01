@@ -7,9 +7,9 @@ goreleaser_before_hooks: ["go run ./cmd/genman"]
 nfpm_extra_contents: [{src: "man/*.1", dst: "/usr/share/man/man1"}]
 has_test_int: false
 has_gen: true
-gen_sources: ["README.md.tpl", "cmd/**/*.go"]
+gen_sources: ["INSTALL.md", "README.md.tpl", "cmd/**/*.go"]
 gen_outputs: ["README.md"]
-gen_cmd: ["go generate ./...", "dprint fmt README.md"]
+gen_cmd: ["go generate ./...", "rumdl check --fix README.md"]
 gen_check_cmd: "git diff --exit-code README.md"
 has_pages: true
 pages_gen_cmd: ["go run ./cmd/genweb"]
