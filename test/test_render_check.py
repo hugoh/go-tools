@@ -268,6 +268,13 @@ def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
                 f".goreleaser.yml publishers block ({got_apt}) doesn't match "
                 f"package_format ({expect_apt})"
             )
+        if expect_apt:
+            cmd = " ".join(goreleaser_yml["publishers"][0]["cmd"].split())
+            if "*_armv7.deb)" not in cmd:
+                failures.append(
+                    "cloudsmith publisher must skip armv7 debs: they share "
+                    "armhf with armv6 and Cloudsmith rejects the duplicate"
+                )
         release_secrets = ci_jobs["release"].get("secrets", {})
         if expect_apt and "cloudsmith_api_key" not in release_secrets:
             failures.append("release job does not pass cloudsmith_api_key")
