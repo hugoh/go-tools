@@ -275,9 +275,32 @@ def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
                     "cloudsmith publisher must skip armv7 debs: they share "
                     "armhf with armv6 and Cloudsmith rejects the duplicate"
                 )
+            rpm_cmds = [
+                " ".join(p["cmd"].split())
+                for p in goreleaser_yml["publishers"]
+                if "cloudsmith push rpm hugoh/rpm/" in " ".join(p["cmd"].split())
+            ]
+            if not rpm_cmds:
+                failures.append("no cloudsmith publisher pushes .rpm to hugoh/rpm")
         release_secrets = ci_jobs["release"].get("secrets", {})
         if expect_apt and "cloudsmith_api_key" not in release_secrets:
             failures.append("release job does not pass cloudsmith_api_key")
+
+    install_md = tmp_path / "INSTALL.md"
+    if install_md.exists() != goreleaser_yml_exists:
+        failures.append("INSTALL.md must exist exactly when has_goreleaser is set")
+    if install_md.exists():
+        text = install_md.read_text()
+        for needle, expected in [
+            ("setup.deb.sh", expect_apt),
+            ("setup.rpm.sh", expect_apt),
+            (
+                f"brew install hugoh/tap/{answers['project_name']}",
+                answers.get("has_homebrew_cask", False),
+            ),
+        ]:
+            if (needle in text) != expected:
+                failures.append(f"INSTALL.md {needle!r} presence should be {expected}")
 
     if goreleaser_yml_exists:
         for archive in goreleaser_yml.get("archives") or []:
