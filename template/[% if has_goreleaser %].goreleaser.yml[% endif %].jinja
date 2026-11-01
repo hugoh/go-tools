@@ -60,11 +60,22 @@ nfpms:
         dst: [[ c.dst ]]
 [%- endfor %]
 [%- endif %]
+
+# cloudsmiths: is GoReleaser Pro only, so push through the Cloudsmith CLI.
+# Publishers see every artifact; only the .deb goes to the apt repo.
+publishers:
+  - name: cloudsmith-apt
+    cmd: >-
+      sh -c 'case "$0" in *.deb) cloudsmith push deb hugoh/apt/any-distro/any-version "$0";; esac'
+      {{ .ArtifactPath }}
+    env:
+      - CLOUDSMITH_API_KEY={{ .Env.CLOUDSMITH_API_KEY }}
 [%- else %]
 archives:
   - formats: [binary]
     name_template: "[[ project_name ]]-{{ .Os }}-{{ .Arch }}"
 [%- endif %]
+
 [%- if has_homebrew_cask %]
 
 brews:

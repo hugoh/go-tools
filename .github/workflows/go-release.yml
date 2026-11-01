@@ -17,6 +17,8 @@ on:
         required: true
       tap_github_token:
         required: false
+      cloudsmith_api_key:
+        required: false
 
 # Scoped to the calling repo. Serialize releases; never cancel one mid-publish.
 concurrency:
@@ -81,6 +83,7 @@ jobs:
           TAG: ${{ steps.validate.outputs.tag }}
           GITHUB_TOKEN: ${{ secrets.gh_token }}
           TAP_GITHUB_TOKEN: ${{ secrets.tap_github_token }}
+          CLOUDSMITH_API_KEY: ${{ secrets.cloudsmith_api_key }}
         run: |
           echo "Pushing ${TAG}"
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}"

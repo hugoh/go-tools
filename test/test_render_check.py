@@ -261,6 +261,18 @@ def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
             )
 
     if goreleaser_yml_exists:
+        expect_apt = answers.get("package_format", "nfpm") == "nfpm"
+        got_apt = goreleaser_yml.get("publishers") is not None
+        if got_apt != expect_apt:
+            failures.append(
+                f".goreleaser.yml publishers block ({got_apt}) doesn't match "
+                f"package_format ({expect_apt})"
+            )
+        release_secrets = ci_jobs["release"].get("secrets", {})
+        if expect_apt and "cloudsmith_api_key" not in release_secrets:
+            failures.append("release job does not pass cloudsmith_api_key")
+
+    if goreleaser_yml_exists:
         for archive in goreleaser_yml.get("archives") or []:
             if "format" in archive:
                 failures.append(
@@ -411,7 +423,7 @@ def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
         checks["goreleaser check"] = lambda: run(
             ["mise-tasks/lint-release"],
             cwd=tmp_path,
-            env={**os.environ, "TAP_GITHUB_TOKEN": "x"},
+            env={**os.environ, "TAP_GITHUB_TOKEN": "x", "CLOUDSMITH_API_KEY": "x"},
         )
 
     # These checks are independent of each other (aside from hk_validate's
