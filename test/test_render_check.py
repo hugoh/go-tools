@@ -275,13 +275,13 @@ def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
                     "cloudsmith publisher must skip armv7 debs: they share "
                     "armhf with armv6 and Cloudsmith rejects the duplicate"
                 )
-            rpm_cmds = [
-                " ".join(p["cmd"].split())
-                for p in goreleaser_yml["publishers"]
-                if "cloudsmith push rpm hugoh/rpm/" in " ".join(p["cmd"].split())
-            ]
-            if not rpm_cmds:
-                failures.append("no cloudsmith publisher pushes .rpm to hugoh/rpm")
+            repo = f"hugoh/{answers['project_name']}/"
+            for fmt in ("deb", "rpm"):
+                if not any(
+                    f"cloudsmith push {fmt} {repo}" in " ".join(p["cmd"].split())
+                    for p in goreleaser_yml["publishers"]
+                ):
+                    failures.append(f"no cloudsmith publisher pushes .{fmt} to {repo}")
         release_secrets = ci_jobs["release"].get("secrets", {})
         if expect_apt and "cloudsmith_api_key" not in release_secrets:
             failures.append("release job does not pass cloudsmith_api_key")

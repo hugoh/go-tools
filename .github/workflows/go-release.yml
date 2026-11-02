@@ -54,6 +54,19 @@ jobs:
         run: |
           echo "::error::Manual bump_type dispatch must run on main (got ${GITHUB_REF})"
           exit 1
+      - name: Check Cloudsmith repos exist
+        if: inputs.has_goreleaser
+        env:
+          CLOUDSMITH_API_KEY: ${{ secrets.cloudsmith_api_key }}
+        run: |
+          repos=$(grep -oE 'cloudsmith push [a-z]+ [^/ ]+/[^/ ]+' .goreleaser.yml | awk '{print $4}' | sort -u)
+          for repo in $repos; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' -H "X-Api-Key: ${CLOUDSMITH_API_KEY}" "https://api.cloudsmith.io/v1/repos/${repo}/")
+            if [ "$code" != "200" ]; then
+              echo "::error::Cloudsmith repo ${repo} not reachable (HTTP ${code}); add it to ~/Code/iac/cloudsmith/repos.tf and apply"
+              exit 1
+            fi
+          done
       - name: Semver release
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         env:
