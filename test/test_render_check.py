@@ -278,10 +278,13 @@ def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
             repo = f"hugoh/{answers['project_name']}/"
             for fmt in ("deb", "rpm"):
                 if not any(
-                    f"cloudsmith push {fmt} {repo}" in " ".join(p["cmd"].split())
+                    f"cloudsmith push {fmt} -W {repo}" in " ".join(p["cmd"].split())
                     for p in goreleaser_yml["publishers"]
                 ):
-                    failures.append(f"no cloudsmith publisher pushes .{fmt} to {repo}")
+                    failures.append(
+                        f"no cloudsmith publisher pushes .{fmt} to {repo} with -W "
+                        "(waiting for sync can outlast the release job timeout)"
+                    )
         release_secrets = ci_jobs["release"].get("secrets", {})
         if expect_apt and "cloudsmith_api_key" not in release_secrets:
             failures.append("release job does not pass cloudsmith_api_key")
