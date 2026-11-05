@@ -275,7 +275,7 @@ def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
                     "cloudsmith publisher must skip armv7 debs: they share "
                     "armhf with armv6 and Cloudsmith rejects the duplicate"
                 )
-            repo = f"hugoh/{answers['project_name']}/"
+            repo = f"hugoh-oss/{answers['project_name']}/"
             for fmt in ("deb", "rpm"):
                 if not any(
                     f"cloudsmith push {fmt} -W {repo}" in " ".join(p["cmd"].split())
