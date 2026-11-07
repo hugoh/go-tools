@@ -13,13 +13,13 @@ import os
 import re
 import shutil
 import subprocess
+import tomllib
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from pathlib import Path
 
 import copier
 import pytest
-import tomllib
 import yaml
 from plumbum import local
 
