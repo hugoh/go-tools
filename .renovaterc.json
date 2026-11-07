@@ -149,22 +149,34 @@
       "overridePackageName": "@biomejs/biome"
     },
     {
-      "description": "go-tools' own biome pin and biome.json $schema move in one PR, so the CLI never lags the schema it validates against, on the same first-weekend window as the dev tools it comes out of (biome is a linter and formatter: a release that adds a rule or reformats code can fail CI). Must stay BELOW the dev tools rule above, whose groupName it replaces.",
-      "matchFileNames": ["mise.toml", "biome.json"],
+      "description": "Biome is tooling like the rest: its pin already moves in the monthly dev tools group, so the biome.json $schema joins it instead of a group of its own (biome only warns when the two versions differ, but every Go repo would see that warning if the schema ran ahead of the pin). Majors are ungrouped, below.",
+      "matchFileNames": ["biome.json"],
       "matchDepNames": ["biome", "biomejs/biome", "@biomejs/biome"],
-      "groupName": "biome toolchain",
+      "matchUpdateTypes": ["minor", "patch", "digest", "pin"],
+      "groupName": "dev tools",
       "extends": ["github>hugoh/renovate-config//presets/monthly-weekend"]
     },
     {
-      "description": "The same for the template: its pin and $schema reach consumers only through a new go-tools tag, so they move in one `fix` PR (one release, one Copier fan-out). Must stay BELOW the template dev tools rule above.",
-      "matchFileNames": [
-        "template/mise.toml.jinja",
-        "template/biome.jsonc.jinja"
-      ],
+      "description": "Same for the template's $schema: it joins template dev tools, and its pin and $schema reach consumers together in one go-tools release (`fix`, like the rest of the template's tool pins).",
+      "matchFileNames": ["template/biome.jsonc.jinja"],
       "matchDepNames": ["biome", "biomejs/biome", "@biomejs/biome"],
-      "groupName": "template biome toolchain",
+      "matchUpdateTypes": ["minor", "patch", "digest", "pin"],
+      "groupName": "template dev tools",
       "semanticCommitType": "fix",
       "extends": ["github>hugoh/renovate-config//presets/monthly-weekend"]
+    },
+    {
+      "description": "Biome $schema majors: the custom managers aren't in the Go hub's tooling list, so give them the weekend window explicitly, like the pin's major (mise). The template's is `fix` for every update type.",
+      "matchFileNames": ["biome.json", "template/biome.jsonc.jinja"],
+      "matchDepNames": ["biome", "biomejs/biome", "@biomejs/biome"],
+      "matchUpdateTypes": ["major"],
+      "extends": ["github>hugoh/renovate-config//presets/weekend"]
+    },
+    {
+      "matchFileNames": ["template/biome.jsonc.jinja"],
+      "matchDepNames": ["biome", "biomejs/biome", "@biomejs/biome"],
+      "matchUpdateTypes": ["major"],
+      "semanticCommitType": "fix"
     }
   ],
   "mise": {
