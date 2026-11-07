@@ -12,7 +12,7 @@
   ],
   "packageRules": [
     {
-      "description": "Non-major GitHub Actions bumps are grouped. Majors stay ungrouped so they keep the monthly window instead of dragging the weekly group onto it.",
+      "description": "Non-major GitHub Actions bumps are grouped. Majors stay ungrouped so they keep their own window (weekend, via presets/automerge) instead of dragging the weekly group onto it.",
       "matchManagers": ["github-actions"],
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "groupName": "GitHub Actions"
@@ -23,7 +23,8 @@
       "groupName": "Go dependencies"
     },
     {
-      "description": "Everything runs in the weekend window (top-level extends) except major updates, which stay on the monthly (first-weekend) window. renovate-config's default.json does the same via minor/patch rules, but this hub only extends presets/base. Lock-file maintenance and vulnerability alerts keep their own schedules.",
+      "description": "Everything runs in the weekend window (top-level extends) except major updates of shipped code, which stay on the monthly (first-weekend) window. Tooling majors (presets/automerge in renovate-config) automerge and keep the weekend window, so this rule skips their managers: it runs after presets/base and would otherwise put them back on the monthly one. renovate-config's default.json does the same via minor/patch rules, but this hub only extends presets/base. Lock-file maintenance and vulnerability alerts keep their own schedules.",
+      "matchManagers": ["!github-actions", "!mise", "!copier", "!pre-commit"],
       "matchUpdateTypes": ["major"],
       "extends": ["github>hugoh/renovate-config//presets/monthly-weekend"]
     },
