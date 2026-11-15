@@ -12,6 +12,14 @@ on:
         type: boolean
         default: false
         description: "Whether the calling repo ships a .goreleaser.yml to build/publish"
+      version:
+        type: string
+        default: ""
+        description: "Release exactly this version, such as 5.0.0-rc.1 (a suffix makes it a pre-release); overrides bump_type"
+      dry_run:
+        type: boolean
+        default: false
+        description: "Bump and validate without pushing the tag or publishing"
     secrets:
       gh_token:
         required: true
@@ -48,11 +56,14 @@ jobs:
       - if: inputs.has_goreleaser
         uses: $/go-mod-cache
       - name: Guard manual dispatch to main
-        if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'
+        if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main' && !inputs.dry_run
         env:
           GITHUB_REF: ${{ github.ref }}
+          RELEASE_VERSION: ${{ inputs.version }}
         run: |
-          echo "::error::Manual bump_type dispatch must run on main (got ${GITHUB_REF})"
+          # A pre-release (a version with a suffix) may be cut from any branch.
+          case "$RELEASE_VERSION" in *-*) exit 0 ;; esac
+          echo "::error::A stable release must be dispatched on main (got ${GITHUB_REF}); pre-releases need a version such as 5.0.0-rc.1"
           exit 1
       - name: Check Cloudsmith repos exist
         if: inputs.has_goreleaser
@@ -70,7 +81,7 @@ jobs:
       - name: Semver release
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         env:
-          BUMP_ARGS: ${{ inputs.bump_type == 'auto' && '--auto' || format('--{0}', inputs.bump_type) }}
+          BUMP_ARGS: ${{ inputs.version != '' && format('--version {0}', inputs.version) || inputs.bump_type == 'auto' && '--auto' || format('--{0}', inputs.bump_type) }}
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -91,7 +102,7 @@ jobs:
           fi
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
       - name: Push tag and Release
-        if: steps.validate.outputs.skip != 'true'
+        if: steps.validate.outputs.skip != 'true' && !inputs.dry_run
         env:
           TAG: ${{ steps.validate.outputs.tag }}
           GITHUB_TOKEN: ${{ secrets.gh_token }}
@@ -106,10 +117,12 @@ jobs:
             goreleaser release --clean
           else
             cog changelog --at "${TAG}" > /tmp/release-notes.md
-            gh release create "${TAG}" --notes-file /tmp/release-notes.md
+            prerelease=()
+            case "$TAG" in *-*) prerelease+=(--prerelease) ;; esac
+            gh release create "${TAG}" --notes-file /tmp/release-notes.md "${prerelease[@]}"
           fi
       - name: Merge Homebrew tap PR
-        if: steps.validate.outputs.skip != 'true' && inputs.has_goreleaser == true
+        if: steps.validate.outputs.skip != 'true' && !inputs.dry_run && inputs.has_goreleaser == true
         env:
           TAP_GITHUB_TOKEN: ${{ secrets.tap_github_token }}
           TAG: ${{ steps.validate.outputs.tag }}

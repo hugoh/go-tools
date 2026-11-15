@@ -108,6 +108,8 @@ gh workflow run ci.yml --ref main -f bump_type=major
 
 (`bump_type` accepts `auto` (default), `patch`, `minor`, or `major`; also available via the Actions tab's "Run workflow" button.) The dispatch must target `main` — `go-release.yml` fails fast otherwise — and still runs `hk`/`goci` before releasing.
 
+A pre-release does not need `main`: dispatch `ci.yml` on any branch with `version` set, for example `gh workflow run ci.yml --ref my-branch -f version=5.0.0-rc.1`. A version with a suffix is marked as a pre-release and published to the GitHub release only (goreleaser skips the Cloudsmith publishers and the Homebrew tap). Set `dry_run` to bump and validate without pushing the tag or publishing; it is allowed on any branch. A stable release can still only be dispatched on `main`.
+
 ---
 
 ## Renovate preset
