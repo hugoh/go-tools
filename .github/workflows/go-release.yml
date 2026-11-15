@@ -81,11 +81,19 @@ jobs:
       - name: Semver release
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         env:
-          BUMP_ARGS: ${{ inputs.version != '' && format('--version {0}', inputs.version) || inputs.bump_type == 'auto' && '--auto' || format('--{0}', inputs.bump_type) }}
+          BUMP_TYPE: ${{ inputs.bump_type }}
+          RELEASE_VERSION: ${{ inputs.version }}
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          cog bump "$BUMP_ARGS"
+          if [ -n "$RELEASE_VERSION" ]; then
+            args=(--version "$RELEASE_VERSION")
+          elif [ "$BUMP_TYPE" = auto ]; then
+            args=(--auto)
+          else
+            args=("--$BUMP_TYPE")
+          fi
+          cog bump "${args[@]}"
       - name: Validate release
         id: validate
         env:
