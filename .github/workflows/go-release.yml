@@ -72,9 +72,8 @@ jobs:
         run: |
           repos=$(grep -oE 'cloudsmith push [a-z]+ [^/ ]+/[^/ ]+' .goreleaser.yml | awk '{print $4}' | sort -u)
           for repo in $repos; do
-            code=$(curl -s -o /dev/null -w '%{http_code}' -H "X-Api-Key: ${CLOUDSMITH_API_KEY}" "https://api.cloudsmith.io/v1/repos/${repo}/")
-            if [ "$code" != "200" ]; then
-              echo "::error::Cloudsmith repo ${repo} not reachable (HTTP ${code}); add it to ~/Code/iac/cloudsmith/repos.tf and apply"
+            if ! cloudsmith repos get "$repo" > /dev/null; then
+              echo "::error::Cloudsmith repo ${repo} not reachable; create it (cloudsmith repos create) and add it to ~/Code/iac/cloudsmith/repos.tf"
               exit 1
             fi
           done
@@ -129,6 +128,27 @@ jobs:
             case "$TAG" in *-*) prerelease+=(--prerelease) ;; esac
             gh release create "${TAG}" --notes-file /tmp/release-notes.md "${prerelease[@]}"
           fi
+      - name: Prune old Cloudsmith packages
+        if: steps.validate.outputs.skip != 'true' && !inputs.dry_run && inputs.has_goreleaser == true
+        env:
+          CLOUDSMITH_API_KEY: ${{ secrets.cloudsmith_api_key }}
+          KEEP_RELEASES: "2"
+        run: |
+          set -o pipefail
+          repos=$(grep -oE 'cloudsmith push [a-z]+ [^/ ]+/[^/ ]+' .goreleaser.yml | awk '{print $4}' | sort -u)
+          for repo in $repos; do
+            cloudsmith ls pkgs "$repo" -F json |
+              jq -r --argjson keep "$KEEP_RELEASES" '
+                [.data[] | {slug: .slug_perm, format, version, at: .uploaded_at}]
+                | group_by(.format)[]
+                | group_by(.version)
+                | sort_by(-(map(.at) | max | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601))
+                | .[$keep:][][].slug' |
+              while read -r slug; do
+                echo "Deleting ${repo}/${slug}"
+                cloudsmith delete -y "${repo}/${slug}"
+              done
+          done
       - name: Merge Homebrew tap PR
         if: steps.validate.outputs.skip != 'true' && !inputs.dry_run && inputs.has_goreleaser == true
         env:
