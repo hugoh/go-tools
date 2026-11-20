@@ -137,7 +137,7 @@ jobs:
           set -o pipefail
           repos=$(grep -oE 'cloudsmith push [a-z]+ [^/ ]+/[^/ ]+' .goreleaser.yml | awk '{print $4}' | sort -u)
           for repo in $repos; do
-            cloudsmith ls pkgs "$repo" -F json |
+            cloudsmith ls pkgs "$repo" --page-all -F json |
               jq -r --argjson keep "$KEEP_RELEASES" '
                 [.data[] | {slug: .slug_perm, format, version, at: .uploaded_at}]
                 | group_by(.format)[]
