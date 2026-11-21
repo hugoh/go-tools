@@ -104,13 +104,13 @@
       "groupName": "pytest (test infra)"
     },
     {
-      "description": "Group non-major bumps to the repo's own mise.toml into one monthly 'dev tools' PR (first weekend of the month) instead of one per tool. npm:renovate keeps its debounce schedule, Go toolchain bumps stay standalone, and golangci-lint stays weekly: it has to be built with a Go at least as new as the code it lints, so a monthly lag would break lint on the next Go bump.",
+      "description": "Group non-major bumps to the repo's own mise.toml into one monthly 'dev tools' PR (first week of the month) instead of one per tool. npm:renovate keeps its debounce schedule, Go toolchain bumps stay standalone, and golangci-lint stays weekly: it has to be built with a Go at least as new as the code it lints, so a monthly lag would break lint on the next Go bump.",
       "matchManagers": ["mise"],
       "matchFileNames": ["mise.toml"],
       "matchUpdateTypes": ["minor", "patch", "digest", "pin"],
       "matchDepNames": ["!npm:renovate", "!go", "!golangci-lint"],
       "groupName": "dev tools",
-      "extends": ["github>hugoh/renovate-config//presets/monthly-weekend"]
+      "extends": ["github>hugoh/renovate-config//presets/monthly"]
     },
     {
       "description": "Same for template/mise.toml.jinja, kept a separate group so the batch stays `fix` (per the rule above) and cuts one go-tools release + one copier fan-out a month instead of one per tool. golangci-lint stays weekly, as above.",
@@ -119,7 +119,7 @@
       "matchUpdateTypes": ["minor", "patch", "digest", "pin"],
       "matchDepNames": ["!go", "!golangci-lint"],
       "groupName": "template dev tools",
-      "extends": ["github>hugoh/renovate-config//presets/monthly-weekend"]
+      "extends": ["github>hugoh/renovate-config//presets/monthly"]
     },
     {
       "description": "hk and hk-config bump together in the monthly 'dev tools' PR: an hk-config release can require a newer hk (min_hk_version), which fails CI until the hk bump lands, so they must not arrive separately. They are read by custom managers (the mise manager is disabled for hk), so the dev tools rule above never sees them. 7-day soak for both, so hk-config can't mature before the hk it needs: updates join a branch as each one matures. Mirrors renovate-config's hk/hk-config linters rule, which this repo doesn't extend.",
@@ -129,7 +129,7 @@
       "matchUpdateTypes": ["minor", "patch"],
       "minimumReleaseAge": "7 days",
       "groupName": "dev tools",
-      "extends": ["github>hugoh/renovate-config//presets/monthly-weekend"]
+      "extends": ["github>hugoh/renovate-config//presets/monthly"]
     },
     {
       "description": "Same for the template's hk.pkl.jinja and mise.toml.jinja pins, in the `fix` 'template dev tools' batch so they cut one go-tools release and one Copier fan-out with the other template tools.",
@@ -139,7 +139,7 @@
       "matchUpdateTypes": ["minor", "patch"],
       "minimumReleaseAge": "7 days",
       "groupName": "template dev tools",
-      "extends": ["github>hugoh/renovate-config//presets/monthly-weekend"]
+      "extends": ["github>hugoh/renovate-config//presets/monthly"]
     },
     {
       "description": "The mise manager looks biome up through github-tags, which finds no updates for it (the tags are @biomejs/biome@<version>), so the pin never moved while the npm-tracked $schema did. Look it up on npm like renovate-config's biome toolchain rule.",
@@ -154,7 +154,7 @@
       "matchDepNames": ["biome", "biomejs/biome", "@biomejs/biome"],
       "matchUpdateTypes": ["minor", "patch", "digest", "pin"],
       "groupName": "dev tools",
-      "extends": ["github>hugoh/renovate-config//presets/monthly-weekend"]
+      "extends": ["github>hugoh/renovate-config//presets/monthly"]
     },
     {
       "description": "Same for the template's $schema: it joins template dev tools, and its pin and $schema reach consumers together in one go-tools release (`fix`, like the rest of the template's tool pins).",
@@ -163,14 +163,14 @@
       "matchUpdateTypes": ["minor", "patch", "digest", "pin"],
       "groupName": "template dev tools",
       "semanticCommitType": "fix",
-      "extends": ["github>hugoh/renovate-config//presets/monthly-weekend"]
+      "extends": ["github>hugoh/renovate-config//presets/monthly"]
     },
     {
-      "description": "Biome $schema majors: the custom managers aren't in the Go hub's tooling list, so give them the weekend window explicitly, like the pin's major (mise). The template's is `fix` for every update type.",
+      "description": "Biome $schema majors: the custom managers aren't in the Go hub's tooling list, so give them the weekly window explicitly, like the pin's major (mise). The template's is `fix` for every update type.",
       "matchFileNames": ["biome.json", "template/biome.jsonc.jinja"],
       "matchDepNames": ["biome", "biomejs/biome", "@biomejs/biome"],
       "matchUpdateTypes": ["major"],
-      "extends": ["github>hugoh/renovate-config//presets/weekend"]
+      "extends": ["github>hugoh/renovate-config//presets/weekly"]
     },
     {
       "matchFileNames": ["template/biome.jsonc.jinja"],
