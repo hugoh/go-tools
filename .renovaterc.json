@@ -52,6 +52,20 @@
       "packageNameTemplate": "jdx/hk",
       "extractVersionTemplate": "^v?(?<version>.*)$",
       "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "description": "Bump the re-actors/alls-green pin in the Copier template's ci.yml.jinja (the github-actions manager does not read it: its go-tools `uses:` lines carry template placeholders). The rendered ci.yml in consumers is Copier-owned.",
+      "managerFilePatterns": [
+        "/^template/\\.github/workflows/ci\\.yml\\.jinja$/"
+      ],
+      "matchStrings": [
+        "re-actors/alls-green@(?<currentDigest>[0-9a-f]{40}) # (?<currentValue>v\\S+)"
+      ],
+      "datasourceTemplate": "github-tags",
+      "depNameTemplate": "re-actors/alls-green",
+      "versioningTemplate": "semver",
+      "autoReplaceStringTemplate": "re-actors/alls-green@{{{newDigest}}} # {{{newValue}}}"
     }
   ],
   "github-actions": {
@@ -93,10 +107,21 @@
       "semanticCommitType": "fix"
     },
     {
-      "description": "Same reasoning as above: template/hk.pkl.jinja's and template/mise.toml.jinja's hk-config/jdx-hk pins only reach consumers via a new go-tools tag.",
+      "description": "Same reasoning as above: template/hk.pkl.jinja's and template/mise.toml.jinja's hk-config/jdx-hk pins, and template/.github/workflows/ci.yml.jinja's alls-green pin, only reach consumers via a new go-tools tag.",
       "matchManagers": ["custom.regex"],
-      "matchFileNames": ["template/hk.pkl.jinja", "template/mise.toml.jinja"],
+      "matchFileNames": [
+        "template/hk.pkl.jinja",
+        "template/mise.toml.jinja",
+        "template/.github/workflows/ci.yml.jinja"
+      ],
       "semanticCommitType": "fix"
+    },
+    {
+      "description": "The shared preset disables re-actors/alls-green bumps in ci.yml for consumers (Copier-owned there); go-tools' own copy is the one place Renovate must keep it current.",
+      "matchManagers": ["github-actions"],
+      "matchPackageNames": ["re-actors/alls-green"],
+      "matchFileNames": [".github/workflows/ci.yml"],
+      "enabled": true
     },
     {
       "matchManagers": ["pip_requirements"],

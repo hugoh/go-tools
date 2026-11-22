@@ -70,8 +70,8 @@ jobs:
 
   render-check:
     needs: changes
-    # Always run on push/dispatch so the release job's `needs` are never
-    # skipped (a skipped need skips release too). Only the paths filter on PRs.
+    # Always run on push/dispatch so a release is never cut without it. Only
+    # the paths filter on PRs.
     if: github.event_name != 'pull_request' || needs.changes.outputs.render == 'true'
     timeout-minutes: 30
     runs-on: ubuntu-latest
@@ -113,8 +113,22 @@ jobs:
       - name: hk check (renovate config)
         run: hk check --no-progress --profile ci-renovate --all --no-fail-fast
 
+  # The single required status check, and all that release waits on. The two
+  # path-filtered checks may be skipped on a PR; everything else must pass.
+  ci-gate:
+    if: always()
+    needs: [changes, hk, render-check, renovate-check]
+    timeout-minutes: 2
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
+        with:
+          jobs: ${{ toJSON(needs) }}
+          allowed-skips: render-check, renovate-check
+
   release:
-    needs: [hk, render-check, renovate-check]
+    needs: ci-gate
     # A manual dispatch only releases from main; elsewhere the job is skipped.
     if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
     uses: hugoh/gh-workflows/.github/workflows/release.yml@ae6e1b2ce64760b5418b71668bb9b0a74a3c4c70 # v1.40.22
