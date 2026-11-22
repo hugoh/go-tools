@@ -1,0 +1,3 @@
+[default.extend-words]
+# "alls-green" is the re-actors/alls-green action.
+alls = "alls"

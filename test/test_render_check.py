@@ -227,6 +227,32 @@ def test_render_and_validate(label, data_file, tmp_path, tmp_path_factory):
                 f"expected {expect_goreleaser!r}"
             )
 
+    # `ci-gate` is the one required check: it aggregates every job that must
+    # pass, and everything that publishes waits on it alone, so a new CI job is
+    # added to its `needs` instead of to each downstream job.
+    def needs_of(job):
+        needs = job.get("needs", [])
+        return [needs] if isinstance(needs, str) else list(needs)
+
+    gate = ci_jobs.get("ci-gate")
+    if gate is None:
+        failures.append("ci.yml has no 'ci-gate' job - no single required check")
+    else:
+        missing = {"hk", "goci"} - set(needs_of(gate))
+        if missing:
+            failures.append(f"ci-gate does not need {sorted(missing)}")
+        if gate.get("if") != "always()":
+            failures.append(
+                "ci-gate must run `if: always()`: a skipped gate reads as passing"
+            )
+        if not re.search(r"re-actors/alls-green@[0-9a-f]{40} # v\S+", ci_yml):
+            failures.append("ci-gate's alls-green is not hash+version pinned")
+        for name in ("pages", "release"):
+            if name in ci_jobs and needs_of(ci_jobs[name]) != ["ci-gate"]:
+                failures.append(
+                    f"{name} needs {needs_of(ci_jobs[name])}, expected ['ci-gate']"
+                )
+
     goreleaser_yml_exists = (tmp_path / ".goreleaser.yml").exists()
     if goreleaser_yml_exists != expect_goreleaser:
         failures.append(

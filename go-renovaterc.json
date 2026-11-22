@@ -42,6 +42,13 @@
       "enabled": false
     },
     {
+      "description": "ci.yml's re-actors/alls-green pin is likewise Copier-owned: it is bumped in go-tools' template and reaches consumers via `copier update`, so Renovate must not also bump it in place.",
+      "matchManagers": ["github-actions"],
+      "matchPackageNames": ["re-actors/alls-green"],
+      "matchFileNames": [".github/workflows/ci.yml"],
+      "enabled": false
+    },
+    {
       "description": "semantic-pr.yml's hugoh/gh-workflows pin is likewise Copier-owned: it is bumped in go-tools' template and reaches consumers via `copier update`, so Renovate must not also bump it in place.",
       "matchManagers": ["github-actions"],
       "matchPackageNames": ["hugoh/gh-workflows"],

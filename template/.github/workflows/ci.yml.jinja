@@ -41,10 +41,23 @@ jobs:
     permissions:
       contents: read
 
+  # The single required status check, and all that pages/release wait on.
+  # Add any new job that must pass to `needs`; downstream jobs stay out of it.
+  ci-gate:
+    if: always()
+    needs: [hk, goci]
+    timeout-minutes: 2
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
+        with:
+          jobs: ${{ toJSON(needs) }}
+
 [%- if has_pages %]
 
   pages:
-    needs: [hk, goci]
+    needs: ci-gate
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     uses: hugoh/go-tools/.github/workflows/go-pages.yml@[[ _copier_conf.vcs_ref_hash ]] # [[ _copier_answers['_commit'] ]]
     permissions:
@@ -56,7 +69,7 @@ jobs:
 [%- endif %]
 
   release:
-    needs: [hk, goci]
+    needs: ci-gate
     uses: hugoh/go-tools/.github/workflows/go-release.yml@[[ _copier_conf.vcs_ref_hash ]] # [[ _copier_answers['_commit'] ]]
     permissions:
       contents: write
