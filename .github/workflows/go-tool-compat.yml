@@ -83,12 +83,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions: {}
     steps:
-      - name: Require the whole version matrix to have passed
-        env:
-          VERSIONS_RESULT: ${{ needs.versions.result }}
-          TEST_RESULT: ${{ needs.test.result }}
-        run: |
-          set -euo pipefail
-          echo "versions=$VERSIONS_RESULT test=$TEST_RESULT"
-          [ "$VERSIONS_RESULT" = success ] || exit 1
-          [ "$TEST_RESULT" = success ] || exit 1
+      - uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
+        with:
+          jobs: ${{ toJSON(needs) }}
