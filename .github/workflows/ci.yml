@@ -61,7 +61,7 @@ jobs:
       # etc.) trigger both.
       - name: Detect mise.toml tool version bumps
         id: mise-tool-bumps
-        uses: hugoh/gh-workflows/tool-bumps@8d17bc6b4d7edc0bbec893e0466eb0ba60728721 # v1.40.27
+        uses: hugoh/gh-workflows/tool-bumps@1990006622d3176e00fbf0d3d0b40723cfe8dbeb # v1.40.28
 
   hk:
     uses: $/.github/workflows/go-hk.yml
@@ -78,7 +78,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: hugoh/gh-workflows/setup@8d17bc6b4d7edc0bbec893e0466eb0ba60728721 # v1.40.27
+      - uses: hugoh/gh-workflows/setup@1990006622d3176e00fbf0d3d0b40723cfe8dbeb # v1.40.28
       # render-check renders the template into throwaway tmpdirs and runs
       # `hk validate` and `mise install` against each. The rendered mise.toml
       # pins tools this repo's own mise.toml doesn't (go, gotestsum,
@@ -107,7 +107,7 @@ jobs:
     steps:
       # hk check pulls in the always-on conventional_commit step
       # (cog check --from-latest-tag), which needs tags and full history.
-      - uses: hugoh/gh-workflows/setup@8d17bc6b4d7edc0bbec893e0466eb0ba60728721 # v1.40.27
+      - uses: hugoh/gh-workflows/setup@1990006622d3176e00fbf0d3d0b40723cfe8dbeb # v1.40.28
         with:
           fetch-depth: 0
       - name: hk check (renovate config)
@@ -131,7 +131,7 @@ jobs:
     needs: ci-gate
     # A manual dispatch only releases from main; elsewhere the job is skipped.
     if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
-    uses: hugoh/gh-workflows/.github/workflows/release.yml@8d17bc6b4d7edc0bbec893e0466eb0ba60728721 # v1.40.27
+    uses: hugoh/gh-workflows/.github/workflows/release.yml@1990006622d3176e00fbf0d3d0b40723cfe8dbeb # v1.40.28
     permissions:
       contents: write
     with:
